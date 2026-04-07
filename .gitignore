@@ -1,0 +1,27 @@
+# Training documents (large binary files, kept local only)
+docs/医院材料学习/
+
+# Runtime data
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files from review pipeline
+tmp_review_*.json

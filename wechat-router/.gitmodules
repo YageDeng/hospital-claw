@@ -1,0 +1,3 @@
+[submodule "wechat-decrypt"]
+	path = wechat-decrypt
+	url = https://github.com/RogerLiu312/load-message.git

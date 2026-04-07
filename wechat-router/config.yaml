@@ -1,0 +1,48 @@
+wechat:
+  polling_interval_seconds: 30
+  window_title: "微信"
+  reset_chat: "文件传输助手"  # click this chat first to deselect any highlighted chat
+
+monitored:
+  # - name: "张三"
+  #   type: contact
+  # - name: "AI健身研讨组"
+  #   type: group
+  - name: "龙虾院长"
+    type: group
+
+ocr:
+  engine: tesseract
+  languages: "chi_sim+eng"
+  confidence_threshold: 0.6
+
+storage:
+  database_path: "data/wechat_monitor.db"
+  screenshots_dir: "data/screenshots"
+  attachments_dir: "data/attachments"
+  debug_dir: "data/debug"
+
+platform:
+  auto_detect: true
+  calibration_file: "data/calibration.json"
+  # All ratios are 0.0–1.0. The first two are relative to the full window width.
+  nav_bar_ratio: 0.035  # left nav icon strip, relative to full window width
+  sidebar_ratio: 0.16   # split point between chat list and message area, relative to full window width
+  # The next two are relative to their own cropped region.
+  avatar_ratio: 0.2     # contact avatar column to trim from left of chat list, relative to chat list width
+  msg_avatar_ratio: 0.04  # avatar column to trim from each side of message area, relative to message area width
+
+logging:
+  level: INFO
+  file: "logs/wechat_monitor.log"
+
+# Auto-reply triggers — used by src/trigger.py (not by main.py)
+triggers:
+  sse_url: "http://localhost:5678/stream"
+  cooldown_seconds: 10  # min seconds between replies to the same chat per rule
+  rules:
+    # Example rule:
+    - name: "greeting"
+      chat_pattern: ".*"                    # regex on chat/contact name
+      content_pattern: ".*龙虾院长.*"              # regex on message content (matches any message containing 龙虾院长)
+      reply_callback: "src/reply_plugins/echo.py::on_match"

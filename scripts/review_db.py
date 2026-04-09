@@ -297,7 +297,8 @@ def main():
             print(json.dumps({"session_id": sid}))
 
         elif args.command == "save":
-            with open(args.json_file, "r", encoding="utf-8") as f:
+            # Accept UTF-8 with/without BOM from different editors/shells.
+            with open(args.json_file, "r", encoding="utf-8-sig") as f:
                 result = json.load(f)
             row_id = db.save_result(args.session, result)
             print(json.dumps({"saved": True, "row_id": row_id}))

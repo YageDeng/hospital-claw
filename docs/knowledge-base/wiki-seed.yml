@@ -1,0 +1,50 @@
+# Wiki seed taxonomy for hospital training knowledge base
+categories:
+  - name: 医保价格政策
+    description: 上海市中医类医疗服务价格项目政策、各级别机构定价标准、加收项规则
+    keywords:
+      - 价格
+      - 定价
+      - 收费标准
+      - 一级
+      - 二级
+      - 三级
+      - 指导价
+
+  - name: 治疗方法规则
+    description: 针法、灸法、推拿、拔罐、外治等治疗方法的操作规范、叠加限制、互斥规则
+    keywords:
+      - 针法
+      - 灸法
+      - 推拿
+      - 拔罐
+      - 互斥
+      - 叠加
+
+  - name: 合规检查标准
+    description: 医保监督检查、表单完整性、诊治一致性、治疗记录规范等审查维度
+    keywords:
+      - 合规
+      - 检查
+      - 审查
+      - 监督
+      - 表单
+      - 签名
+
+  - name: 信息化建设
+    description: 医疗信息化建设、信息安全、数字化管理系统
+    keywords:
+      - 信息化
+      - 数字化
+      - 信息安全
+      - 系统
+
+  - name: 医院运营管理
+    description: 医院运营策略、降本增效、履约考核、监管应对体系
+    keywords:
+      - 运营
+      - 管理
+      - 降本增效
+      - 考核
+      - 监管
+

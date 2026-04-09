@@ -21,14 +21,14 @@ description: Review TCM (Traditional Chinese Medicine) treatment forms for medic
 
 | 模式 | 触发条件 | 处理方式 |
 |------|---------|---------|
-| **单图审查** | 用户提供 1 张图片 | 直接在当前会话中审查 |
-| **批量审查** | 用户提供 2 张及以上图片 | 启动并发流水线，每张图片分配一个独立子代理 |
+| **单图审查** | 用户提供1张图片 | 直接在当前会话中审查 |
+| **批量审查** | 用户提供2张及以上图片 | 启动并发流水线，每张图片分配一个独立子代理 |
 
-## 一、批量审查流水线（2 张及以上图片）
+## 一、批量审查流水线（2张及以上图片）
 
 ### 流水线原则
 
-1. **一图一代理**：每个子代理只处理一张图片，避免图片与结论错位
+1. **一图一代理**：每个子代理（Task subagent）只处理一张图片，避免图片与结论错位
 2. **多表单拆分**：同一张图片中可能包含多份治疗单（叠放拍摄），每份单独审查
 3. **结果持久化**：每份审查结果保存到 SQLite 数据库
 4. **汇总等待**：主代理等待所有子代理完成后，生成统一汇总报告
@@ -50,8 +50,7 @@ description: Review TCM (Traditional Chinese Medicine) treatment forms for medic
 收到用户图片后，统计图片数量并初始化数据库：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
-.\.venv\Scripts\Activate.ps1
+cd c:\Users\roger\Documents\Pyproject\hospital-claw
 python scripts/review_db.py init --image-count <图片数量>
 ```
 
@@ -59,7 +58,7 @@ python scripts/review_db.py init --image-count <图片数量>
 
 ### 第二步：为每张图片分派子代理
 
-对每张图片，使用 Task/Subagent 工具创建一个独立子代理。**同时**分派多个子代理以并发处理。
+对每张图片，使用 Task 工具创建一个独立子代理。**同时**分派多个子代理以并发处理。
 
 每个子代理的 prompt 必须包含以下完整信息：
 
@@ -125,16 +124,10 @@ python scripts/review_db.py init --image-count <图片数量>
 
 ### 维度六：治疗记录完整性
 每次治疗必须记录：治疗日期、起止时间、治疗项目、患者签名、医师签名。
-
-**重要**：处方规定的治疗次数可能多于已记录的次数，这属于正常情况——后续治疗尚未发生，不应视为不合格。审查时只需检查已完成的治疗记录是否规范（日期、时间、签名齐全），不以"记录次数 < 处方次数"作为不通过的依据。
-
-仅在以下情况判定为不通过：
-- 记录完全空白
-- 已记录条目缺少必要信息
-- 治疗日期间隔超过 3 个月
+处方次数多于已记录次数属于正常（后续治疗尚未发生）。
+仅在以下情况判定为不通过：记录完全空白、已记录条目缺必要信息、治疗日期间隔超3个月。
 
 ### 维度七：部位/穴位标注
-- 治疗项目应标明治疗的部位或穴位
 - 治疗单格式：部位/穴位栏必须填写
 - 治疗申请单格式：部位栏应填写（手写可接受）
 
@@ -171,11 +164,8 @@ JSON 文件格式（保存为 tmp_review_<image_index>_<form_index>.json）：
 
 保存到数据库的命令：
 
-```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
-.\.venv\Scripts\Activate.ps1
+cd c:\Users\roger\Documents\Pyproject\hospital-claw
 python scripts/review_db.py save --session <SESSION_ID> --json-file tmp_review_<image_index>_<form_index>.json
-```
 
 保存成功后，删除临时 JSON 文件。
 
@@ -192,8 +182,6 @@ python scripts/review_db.py save --session <SESSION_ID> --json-file tmp_review_<
 分派所有子代理后，通过轮询数据库状态确认进度：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
-.\.venv\Scripts\Activate.ps1
 python scripts/review_db.py status --session <SESSION_ID>
 ```
 
@@ -204,8 +192,6 @@ python scripts/review_db.py status --session <SESSION_ID>
 所有图片处理完成后，生成汇总报告：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
-.\.venv\Scripts\Activate.ps1
 python scripts/review_db.py summary --session <SESSION_ID>
 ```
 
@@ -222,9 +208,9 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 
 ---
 
-## 二、单图审查（1 张图片）
+## 二、单图审查（1张图片）
 
-如果用户只提供了 1 张图片，无需启动流水线。直接在当前会话中执行审查。
+如果用户只提供了1张图片，无需启动流水线。直接在当前会话中执行审查。
 
 ### 第零步：查询知识库（如可用）
 
@@ -243,10 +229,6 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 - 非治疗单内容（收据、通知等）→ 忽略
 
 ### 第二步：逐表单审查
-
-上海沁宇堂中医门诊部（一级医疗机构）常见两种表单类型：
-- **治疗单**：处方样式，含项目/数量/单位/部位穴位栏，底部附治疗记录（日期/医生护士签名/患者签名）
-- **治疗申请单**：表格样式，含序号/项目/部位/方法/时长/次数/金额，底部附治疗记录表（治疗日期/起止时间/治疗项目/患者签名/医师签名）
 
 对每份独立的治疗单，按七大维度逐项检查。
 
@@ -305,16 +287,13 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 - 患者签名
 - 医师签名
 
-**重要**：处方规定的治疗次数可能多于已记录的次数，这属于正常情况——后续治疗尚未发生，不应视为不合格。审查时只需检查已完成的治疗记录是否规范（日期、时间、签名齐全），不以"记录次数 < 处方次数"作为不通过的依据。
-
-仅在以下情况判定为不通过：
-- 治疗记录完全空白（无任何记录）
-- 已记录的条目缺少必要信息（如缺日期、缺签名）
-- 治疗日期之间存在明显不合理的间隔（如同一疗程内间隔超过 3 个月）
+**重要**：处方规定的治疗次数可能多于已记录的次数，这属于正常情况。仅在以下情况判定为不通过：
+- 治疗记录完全空白
+- 已记录的条目缺少必要信息
+- 治疗日期之间存在明显不合理的间隔（超过3个月）
 
 #### 维度七：部位/穴位标注
 
-- 治疗项目应标明治疗的部位或穴位
 - 治疗单格式：部位/穴位栏必须填写
 - 治疗申请单格式：部位栏应填写（手写可接受）
 
@@ -372,7 +351,7 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 - 审查结果数据库位于 `data/reviews.db`，可通过以下命令导出历史记录：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
-.\.venv\Scripts\Activate.ps1
+cd c:\Users\roger\Documents\Pyproject\hospital-claw
 python scripts/review_db.py export --session <SESSION_ID>
 ```
+

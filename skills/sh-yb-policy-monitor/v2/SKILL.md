@@ -21,17 +21,13 @@ description: 监控上海市医疗保障局官网（ybj.sh.gov.cn），获取最
 - **主存储路径**：`C:\Users\roger\Documents\sh-yb-policies\`
 - **知识库副本**：获取后自动复制到 `docs/医院材料学习/` 以便知识库索引
 - **文件命名**：`{YYYY-MM-DD}_{栏目代号}_{标题简称}.md`
-- 标题简称：取标题前 20 个字符，特殊字符替换为下划线
-- 保存前检查同名文件是否已存在，已存在则跳过
 
 ## 执行流程
 
 ### 方式一：Python 脚本（推荐）
 
-使用本技能附带的 Python 脚本自动完成全部流程：
-
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd c:\Users\roger\Documents\Pyproject\hospital-claw
 .\.venv\Scripts\Activate.ps1
 python skills/sh-yb-policy-monitor/scripts/fetch_policies.py
 ```
@@ -39,12 +35,6 @@ python skills/sh-yb-policy-monitor/scripts/fetch_policies.py
 可选参数：
 - `--date YYYY-MM-DD`：指定检查日期，默认为昨天
 - `--days N`：检查最近 N 天，默认为 1
-
-如依赖缺失，可安装：`pip install requests beautifulsoup4`
-
-脚本会自动完成：获取列表 → 筛选日期 → 下载正文 → 保存文件 → 输出摘要。
-
-运行完毕后，**读取脚本输出**，将结果整理为下方"输出格式"呈现给用户。
 
 ### 方式二：WebFetch 手动流程
 
@@ -132,3 +122,4 @@ qmd wiki ingest
 
 如所有栏目均无目标日期的新文章，回复：
 > 已检查上海市医保局三个栏目（医保动态/最新政策/公示公告），{目标日期}无新发布内容。知识库无需更新。
+

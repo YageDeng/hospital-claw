@@ -74,3 +74,16 @@ Run 'qmd --help' for usage.
 
 - 当前：**已解决（采用转换为 Markdown 后索引的规避方案）**，B2 的“文档可搜索”目标达成。
 
+## B3 追加记录（Wiki 生成）
+
+- `qmd wiki ingest` 在当前版本中不是“自动全量生成 wiki”，而是“对单个 source 做分析建议”。
+- 传本地绝对路径（如 `D:\...\src-001.md`）会报 `Source document not found`。
+- 可行方式：先把 source 目录加入 collection，再用 collection 路径调用：
+  - `qmd wiki ingest "wiki_ingest_src/src-001.md" --wiki kb_wiki`
+- 要真正生成页面，需执行 `qmd wiki write` 写入页面。
+- 本次已通过批量 `qmd wiki write` 生成：
+  - `docs/knowledge-base/wiki/index.md`
+  - `docs/knowledge-base/wiki/sources/src-001.md` ... `src-030.md`
+  - 5 个分类 `index.md`
+- `qmd wiki index kb_wiki` 显示 `Auto-generated index of 36 pages`。
+

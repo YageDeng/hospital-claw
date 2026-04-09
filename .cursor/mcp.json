@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mineru-document-explorer": {
+      "url": "http://localhost:8181/mcp"
+    }
+  }
+}
+

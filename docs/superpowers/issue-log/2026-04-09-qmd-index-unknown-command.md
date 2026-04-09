@@ -87,3 +87,37 @@ Run 'qmd --help' for usage.
   - 5 个分类 `index.md`
 - `qmd wiki index kb_wiki` 显示 `Auto-generated index of 36 pages`。
 
+## F 阶段追加记录（query 首次运行）
+
+- 在 F2 验证中执行 `qmd query` 时，CLI 提示首次需下载 3 个模型（约 300MB + 1.1GB + 640MB）。
+- 当前环境下该过程长时间停留在 `Gathering information`，未在合理时间内返回结果，已中止该进程。
+- 临时处理：改用 `qmd search` 完成价格与规则关键词检索验证，确保知识库基础检索链路可用。
+- 建议：后续在网络稳定且允许长时下载时，单独完成 `qmd query` 首次模型拉取，再复测 F2 的 MCP/query 全链路。
+
+## F3 追加记录（单图测试：文本替代）
+
+- 按计划的“无图片替代方案”执行文本用例，完成单图等价验证。
+- 已通过 `qmd search` 检索到关键依据：
+  - 常规针法 50；
+  - 特殊针具针法 60；
+  - 腰部疾病推拿 80；
+  - 针法互斥规则。
+- 本轮未出现新的命令级错误或环境阻塞问题。
+- 输出记录文件：`docs/superpowers/test-results/2026-04-09-f3-single-image-text-fallback-zh.md`。
+
+## F4-F8 追加记录
+
+- F4（批量流水线）已用计划提供的“多图文本模拟”跑通：3 图 -> 4 条结果，SQLite 会话完成。
+- F5（多表单检测）已按复杂场景文本完成：识别 2 张治疗单，忽略 2 项无关内容，发现针法叠加风险。
+- F6（MCP 停机）已验证：
+  - `qmd mcp stop` 后 endpoint 不可达；
+  - `qmd mcp --http --daemon` 可恢复服务。
+- F7（增量索引）已验证新增规则可检索，并执行清理回滚。
+- F8（最终验证）中 `pytest` 10 项全部通过。
+
+### 本轮问题记录：PowerShell 链式命令兼容
+
+- 现象：在当前环境中使用 `&&` 连接命令会报 `InvalidEndOfLine`。
+- 尝试：将链式命令改为分号 `;` 顺序执行。
+- 结果：命令执行恢复正常，后续流程不受影响。
+

@@ -12,6 +12,8 @@
 
 ---
 
+> **2026-04-09 兼容性更新：** 本机的 `qmd 1.0.5` **不提供** `qmd index`。执行时请遵循 `docs/superpowers/issue-log/2026-04-09-qmd-index-unknown-command.md` 中记录的兼容流程：先把二进制文档转换为 Markdown，再用 `qmd collection add --mask "**/*.md"` 更新可检索输入；Wiki 刷新也应视为 collection-relative `qmd wiki ingest` + `qmd wiki write` 流程，而不是只运行裸 `qmd wiki ingest`。
+
 ## 文件结构
 
 ### 需要创建的新文件
@@ -24,7 +26,8 @@
 | `docs/knowledge-base/wiki/` | MinerU 生成的互链 Wiki 页面 |
 | `docs/knowledge-base/index/` | MinerU 搜索索引 |
 | `.cursor/mcp.json` | MinerU MCP 服务配置 |
-| `skills/knowledge-base-update/v1/SKILL.md` | 新的统一知识库更新技能 |
+| `skills/knowledge-base-update/v1/SKILL.md` | 归档的原始知识库更新技能 |
+| `skills/knowledge-base-update/v2/SKILL.md` | 兼容 qmd 1.0.5 的知识库更新技能 |
 | `skills/knowledge-base-update/SKILL.md` | 最新版本的副本 |
 | `skills/tcm-treatment-plan/v1/SKILL.md` | 归档原始版本 |
 | `skills/tcm-treatment-plan/v1/方案参考.md` | 归档原始版本 |

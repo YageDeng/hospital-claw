@@ -6,6 +6,8 @@
 
 ---
 
+> **2026-04-09 compatibility update:** The original design assumed a `qmd index` workflow. On this machine, `qmd 1.0.5` does not provide `index`, so implementation now uses Markdown conversion + `qmd collection add --mask "**/*.md"` for searchable inputs, and collection-relative `qmd wiki ingest` + `qmd wiki write` for wiki output. Treat the implementation plan and issue log as the operational source of truth for command syntax.
+
 ## 1. Architecture Overview
 
 The system has 4 layers:

@@ -12,6 +12,8 @@
 
 ---
 
+> **2026-04-09 compatibility update:** On this machine, `qmd 1.0.5` does **not** provide `qmd index`. Follow the compatibility flow from `docs/superpowers/issue-log/2026-04-09-qmd-index-unknown-command.md`: convert binary docs to Markdown, use `qmd collection add --mask "**/*.md"` for searchable inputs, and treat wiki refresh as a collection-relative `qmd wiki ingest` + `qmd wiki write` flow rather than bare `qmd wiki ingest`.
+
 ## File Structure
 
 ### New files to create
@@ -24,7 +26,8 @@
 | `docs/knowledge-base/wiki/` | MinerU-generated interlinked wiki pages |
 | `docs/knowledge-base/index/` | MinerU search index |
 | `.cursor/mcp.json` | MinerU MCP server configuration |
-| `skills/knowledge-base-update/v1/SKILL.md` | New unified KB update skill |
+| `skills/knowledge-base-update/v1/SKILL.md` | Archived original KB update skill |
+| `skills/knowledge-base-update/v2/SKILL.md` | qmd 1.0.5-compatible KB update skill |
 | `skills/knowledge-base-update/SKILL.md` | Copy of latest version |
 | `skills/tcm-treatment-plan/v1/SKILL.md` | Archived original |
 | `skills/tcm-treatment-plan/v1/方案参考.md` | Archived original |

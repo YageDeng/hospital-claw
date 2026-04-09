@@ -59,7 +59,7 @@ python skills/sh-yb-policy-monitor/scripts/fetch_policies.py
 
 ## 获取后：知识库更新（v2 新增）
 
-脚本运行完毕后，**必须执行以下步骤**将新政策纳入知识库：
+脚本运行完毕后，**不要使用 `qmd index`**。当前仓库应按以下兼容流程更新知识库：
 
 1. **复制到知识库源目录**：将新获取的文件从 `C:\Users\roger\Documents\sh-yb-policies\` 复制到 `docs/医院材料学习/`
 
@@ -70,21 +70,26 @@ foreach ($f in $newFiles) {
 }
 ```
 
-2. **索引新文件**：
+2. **刷新 Markdown 检索集合**：
 
 ```powershell
-qmd index "docs\医院材料学习"
+cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+.\.venv\Scripts\Activate.ps1
+qmd collection remove source_md 2>$null
+qmd collection add "docs/医院材料学习" --name source_md --mask "**/*.md"
 ```
 
-3. **更新 Wiki**：
+3. **如需同步知识库支撑文件**，运行：
 
 ```powershell
-qmd wiki ingest
+python scripts/update_kb_manifest.py
 ```
 
-4. **在输出中注明**：在摘要末尾添加知识库更新状态
+4. **如需重建 wiki 页面**，不要假设 `qmd wiki ingest` 会自动全量生效。当前 CLI 需要 collection-relative `qmd wiki ingest` + `qmd wiki write` 流程；推荐直接按 `knowledge-base-update` 技能执行统一更新。
 
-如 MinerU 未安装或 MCP 服务未运行，跳过知识库更新步骤并在输出中注明："⚠️ 知识库未更新（MinerU 不可用），请手动运行 knowledge-base-update 技能。"
+5. **在输出中注明**：在摘要末尾添加知识库更新状态
+
+如 MinerU 未安装、MCP 服务未运行，或 `qmd query` 首次运行卡在模型下载，跳过深度更新并在输出中注明："⚠️ 知识库检索层未完全更新，请稍后运行 knowledge-base-update 技能。"
 
 ## 文件格式
 
@@ -126,8 +131,8 @@ qmd wiki ingest
 本次共获取 {N} 篇新文件，已保存至 C:\Users\roger\Documents\sh-yb-policies\
 
 ### 知识库更新状态
-- ✅ 已索引 {N} 个新文件到知识库
-- ✅ Wiki 页面已更新
+- ✅ 已将 {N} 个新文件纳入知识库检索层
+- ℹ️ Wiki 页面按当前 CLI 能力决定是否重建
 ```
 
 如所有栏目均无目标日期的新文章，回复：

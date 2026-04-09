@@ -1,0 +1,432 @@
+{
+  "last_updated": "2026-04-09T14:58:24.735221+00:00",
+  "files": [
+    {
+      "path": "docs/knowledge-base/.staging/2025年新立项中医针法耗材对应表_Sheet1.md",
+      "group": ".staging",
+      "size": 1763,
+      "modified_at": "2026-04-09T14:13:02.834219+00:00",
+      "hash": "sha256:9e6175f24569381afc158d957cb8d583241b32000a5b301afe7e0376f8ff8be5"
+    },
+    {
+      "path": "docs/knowledge-base/.staging/上海市中医针法类医疗服务价格项目立项指南映射关系（参考）(3)..md",
+      "group": ".staging",
+      "size": 25595,
+      "modified_at": "2026-04-09T14:13:02.835308+00:00",
+      "hash": "sha256:17a0725f2c963c40046cb344a20e5d0988f0ec3348222fcfc0fbe8cc436e5c87"
+    },
+    {
+      "path": "docs/knowledge-base/.staging/上海沁宇堂中医门诊部医保检查结果（本地）(1)_汇总表（表一）.md",
+      "group": ".staging",
+      "size": 2588,
+      "modified_at": "2026-04-09T14:13:02.835308+00:00",
+      "hash": "sha256:34421de5c01e890a46b414d8b0d4849d4ecbc9ea3983d208e91b75b5ae8eb65e"
+    },
+    {
+      "path": "docs/knowledge-base/.staging/上海沁宇堂中医门诊部医保检查结果（本地）(1)_汇总表（表二）.md",
+      "group": ".staging",
+      "size": 1789,
+      "modified_at": "2026-04-09T14:13:02.835308+00:00",
+      "hash": "sha256:08fc1b9d41920687958f7c524ebc66af32c5f56c5180767b8f381ba1fb97c9d4"
+    },
+    {
+      "path": "docs/knowledge-base/.staging/上海沁宇堂中医门诊部医保检查结果（本地）(1)_违规交易.md",
+      "group": ".staging",
+      "size": 428,
+      "modified_at": "2026-04-09T14:13:02.835308+00:00",
+      "hash": "sha256:19deb99989d0237ad49d053fd743ae01e4651d50f372d1b409872c134e2db036"
+    },
+    {
+      "path": "docs/knowledge-base/.staging/上海沁宇堂中医门诊部医保检查结果（本地）(1)_违规明细.md",
+      "group": ".staging",
+      "size": 28956,
+      "modified_at": "2026-04-09T14:13:02.835308+00:00",
+      "hash": "sha256:df9273f115ace6b923f0733b368385702ab98a1e791f1bce548175cf711d20aa"
+    },
+    {
+      "path": "docs/knowledge-base/.staging/上海沁宇堂中医门诊部医保检查结果（本地）(1)_附表一.md",
+      "group": ".staging",
+      "size": 555,
+      "modified_at": "2026-04-09T14:13:02.836308+00:00",
+      "hash": "sha256:b35c6d58cbbde3ee4a5dcfee03867791f50dc0f263e868323293a3a558c7f81a"
+    },
+    {
+      "path": "docs/knowledge-base/.staging/上海沁宇堂中医门诊部医保检查结果（本地）(1)_附表二.md",
+      "group": ".staging",
+      "size": 9714,
+      "modified_at": "2026-04-09T14:13:02.836308+00:00",
+      "hash": "sha256:7cb9c64dc49cb27669d6d1e4167d41409108fb9d4910e54fa3ca76946b52ace2"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/25年中医治疗项目调整培训20250718.md",
+      "group": ".staging-binary-md",
+      "size": 11029,
+      "modified_at": "2026-04-09T14:13:02.830220+00:00",
+      "hash": "sha256:2f84db50a5c8fdc3ddb91dfb58678123cb68a6d5b32d39596070b07120753301"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/7月25日沁宇堂检查第三次-沁宇堂.md",
+      "group": ".staging-binary-md",
+      "size": 122,
+      "modified_at": "2026-04-09T14:13:02.830220+00:00",
+      "hash": "sha256:556dcd50d1c697f03f020adc0b01913baf79cec0910fa6ea3fb42a9ea5471f32"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/7月25日沁宇堂检查第二次-沁宇堂.md",
+      "group": ".staging-binary-md",
+      "size": 122,
+      "modified_at": "2026-04-09T14:13:02.830220+00:00",
+      "hash": "sha256:5f7fe5fba7dfde546562a1948af21d1b44f957fccab0ff73f70145b9adb0f8e8"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/上海市中医外治类医疗服务价格项目立项指南映射关系-参考.md",
+      "group": ".staging-binary-md",
+      "size": 194,
+      "modified_at": "2026-04-09T14:13:02.831220+00:00",
+      "hash": "sha256:1477de0490678e3cdf2144932617fa68f9a71088d03a30e6427aeaccc2e0ec83"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/上海市中医类-灸法-拔罐-推拿-医疗服务价格项目立项指南映射关系-参考.md",
+      "group": ".staging-binary-md",
+      "size": 242,
+      "modified_at": "2026-04-09T14:13:02.831220+00:00",
+      "hash": "sha256:1d20491b8108b6b8b39f126fc2f483755072a10ab9b73f3f57710a40f1535ee1"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/上海市中医针法类医疗服务价格项目立项指南映射关系-参考.md",
+      "group": ".staging-binary-md",
+      "size": 194,
+      "modified_at": "2026-04-09T14:13:02.831220+00:00",
+      "hash": "sha256:3ad377c9cb0f64e4e56f9d0038325173c511f47c7a78c5777d54c9b510b97eb2"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/上海市中医骨伤类医疗服务价格项目立项指南映射关系-参考.md",
+      "group": ".staging-binary-md",
+      "size": 194,
+      "modified_at": "2026-04-09T14:13:02.831220+00:00",
+      "hash": "sha256:43d7d18f9dfba06fba75fbc7c510c2d9aed4b97e56c2d44f7e0075229a9f40bf"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/上海市产科类医疗服务价格项目立项指南映射关系-参考.md",
+      "group": ".staging-binary-md",
+      "size": 182,
+      "modified_at": "2026-04-09T14:13:02.831220+00:00",
+      "hash": "sha256:a55041cef665dcdac57b109d29ca08221c8f8e3c0732302aa7ced5f72804e5c3"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/保龙-王惠玲-优化管理之降本增效.md",
+      "group": ".staging-binary-md",
+      "size": 8570,
+      "modified_at": "2026-04-09T14:13:02.831220+00:00",
+      "hash": "sha256:b357beaddb7a8077194de03484ce8420f2ec45addbf945ddca35766aa60114fb"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/关于印发2022年医保信息安全检查计划的通知.md",
+      "group": ".staging-binary-md",
+      "size": 5967,
+      "modified_at": "2026-04-09T14:13:02.831220+00:00",
+      "hash": "sha256:0b9ec1a2107b6c2bccadaeb7c43d73d15eff22127afb4e73abb101cb52994a39"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/关于规范调整本市中医类医疗服务价格项目的通知.md",
+      "group": ".staging-binary-md",
+      "size": 69800,
+      "modified_at": "2026-04-09T14:13:02.832220+00:00",
+      "hash": "sha256:c71f939c0ae90c3388a0c31e0d55ebdb9691330586a0f156337d5ee0fec58bab"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/内部培训材料-上海市部分医疗服务价格项目立项指南落地实施政策培训-20250711.md",
+      "group": ".staging-binary-md",
+      "size": 3401,
+      "modified_at": "2026-04-09T14:13:02.832220+00:00",
+      "hash": "sha256:eb0bbaef9fb4a3676037d4255a1014ac4eec5bfd9fb6b90b2a9a24be6ce90fee"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/医保体系-中医治疗新项目梳理20250725.md",
+      "group": ".staging-binary-md",
+      "size": 2019,
+      "modified_at": "2026-04-09T14:13:02.832220+00:00",
+      "hash": "sha256:4cf60da43b8002ab1b5c149d8d76200bae2004f223bd8cff6fb165cbf8971d56"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/医保监督检查沟通会.md",
+      "group": ".staging-binary-md",
+      "size": 1502,
+      "modified_at": "2026-04-09T14:13:02.832220+00:00",
+      "hash": "sha256:05fdb1b2c5a74508895eb5d9801c2b015d51bc59787c6f6e6c8ec5a375049f25"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/协爱医疗集团信息化-2025-8-1.md",
+      "group": ".staging-binary-md",
+      "size": 14135,
+      "modified_at": "2026-04-09T14:13:02.833220+00:00",
+      "hash": "sha256:9897e3781b38813d6cf92674e9e411522407d4a27a404fe9acedf6eebab6771b"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/协爱集团信息化建设的情况介绍2025-7-29.md",
+      "group": ".staging-binary-md",
+      "size": 11561,
+      "modified_at": "2026-04-09T14:13:02.833220+00:00",
+      "hash": "sha256:437c77639218ebfc2b4e50947305dc77f584e525c113df70019c79552d60a95a"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/嘉定区定点医疗机构履约考核自查指标.md",
+      "group": ".staging-binary-md",
+      "size": 558,
+      "modified_at": "2026-04-09T14:13:02.833220+00:00",
+      "hash": "sha256:448e856c3df416204f2df82e60be36453e03dd0fc77301497eb73a201d5387d4"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/奉贤-邵晓婷-强监管下医院的应对体系.md",
+      "group": ".staging-binary-md",
+      "size": 69829,
+      "modified_at": "2026-04-09T14:13:02.833220+00:00",
+      "hash": "sha256:b9d01eeb9e9e0648338be57cefb872b2505004201470c404f7b73d15608ac7fa"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/数字赋能社会办医高质量发展-中医门诊治疗项目合规开展探索.md",
+      "group": ".staging-binary-md",
+      "size": 13577,
+      "modified_at": "2026-04-09T14:13:02.834219+00:00",
+      "hash": "sha256:ac0d4e60c7f0aa326ea72263a9ae181b6df29e98021c886b378a840c291e8edb"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/栋安-张奇-医疗质控标准化体系分享.md",
+      "group": ".staging-binary-md",
+      "size": 27936,
+      "modified_at": "2026-04-09T14:13:02.834219+00:00",
+      "hash": "sha256:fbba9efbc14c5569be1a5e8d8e2b8014bf9bf1cc92ba87f1775591eee518c4a3"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/沁宇堂7月25日-医保检查资料第一次.md",
+      "group": ".staging-binary-md",
+      "size": 118,
+      "modified_at": "2026-04-09T14:13:02.834219+00:00",
+      "hash": "sha256:85dcc2bcf8207d734128b29664ae9665ba7d5c6c0b6d1d8971ec13ee0304d746"
+    },
+    {
+      "path": "docs/knowledge-base/.staging-binary-md/王九佰-门诊医保管理体系20240726.md",
+      "group": ".staging-binary-md",
+      "size": 17937,
+      "modified_at": "2026-04-09T14:13:02.834219+00:00",
+      "hash": "sha256:3b2034bac0042e42f3389a3a983607fbbca1dd8106942e340c31afd4a307cc9f"
+    },
+    {
+      "path": "docs/knowledge-base/.manual-rules/.gitkeep",
+      "group": ".manual-rules",
+      "size": 2,
+      "modified_at": "2026-04-09T14:42:55.359943+00:00",
+      "hash": "sha256:7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-001.md",
+      "group": ".wiki-ingest-src",
+      "size": 11029,
+      "modified_at": "2026-04-09T14:13:02.836308+00:00",
+      "hash": "sha256:2f84db50a5c8fdc3ddb91dfb58678123cb68a6d5b32d39596070b07120753301"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-002.md",
+      "group": ".wiki-ingest-src",
+      "size": 122,
+      "modified_at": "2026-04-09T14:13:02.836308+00:00",
+      "hash": "sha256:5f7fe5fba7dfde546562a1948af21d1b44f957fccab0ff73f70145b9adb0f8e8"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-003.md",
+      "group": ".wiki-ingest-src",
+      "size": 122,
+      "modified_at": "2026-04-09T14:13:02.836308+00:00",
+      "hash": "sha256:556dcd50d1c697f03f020adc0b01913baf79cec0910fa6ea3fb42a9ea5471f32"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-004.md",
+      "group": ".wiki-ingest-src",
+      "size": 8570,
+      "modified_at": "2026-04-09T14:13:02.837309+00:00",
+      "hash": "sha256:b357beaddb7a8077194de03484ce8420f2ec45addbf945ddca35766aa60114fb"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-005.md",
+      "group": ".wiki-ingest-src",
+      "size": 27936,
+      "modified_at": "2026-04-09T14:13:02.837309+00:00",
+      "hash": "sha256:fbba9efbc14c5569be1a5e8d8e2b8014bf9bf1cc92ba87f1775591eee518c4a3"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-006.md",
+      "group": ".wiki-ingest-src",
+      "size": 69829,
+      "modified_at": "2026-04-09T14:13:02.837309+00:00",
+      "hash": "sha256:b9d01eeb9e9e0648338be57cefb872b2505004201470c404f7b73d15608ac7fa"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-007.md",
+      "group": ".wiki-ingest-src",
+      "size": 69800,
+      "modified_at": "2026-04-09T14:13:02.838308+00:00",
+      "hash": "sha256:c71f939c0ae90c3388a0c31e0d55ebdb9691330586a0f156337d5ee0fec58bab"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-008.md",
+      "group": ".wiki-ingest-src",
+      "size": 5967,
+      "modified_at": "2026-04-09T14:13:02.838308+00:00",
+      "hash": "sha256:0b9ec1a2107b6c2bccadaeb7c43d73d15eff22127afb4e73abb101cb52994a39"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-009.md",
+      "group": ".wiki-ingest-src",
+      "size": 558,
+      "modified_at": "2026-04-09T14:13:02.838308+00:00",
+      "hash": "sha256:448e856c3df416204f2df82e60be36453e03dd0fc77301497eb73a201d5387d4"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-010.md",
+      "group": ".wiki-ingest-src",
+      "size": 3401,
+      "modified_at": "2026-04-09T14:13:02.838308+00:00",
+      "hash": "sha256:eb0bbaef9fb4a3676037d4255a1014ac4eec5bfd9fb6b90b2a9a24be6ce90fee"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-011.md",
+      "group": ".wiki-ingest-src",
+      "size": 118,
+      "modified_at": "2026-04-09T14:13:02.838308+00:00",
+      "hash": "sha256:85dcc2bcf8207d734128b29664ae9665ba7d5c6c0b6d1d8971ec13ee0304d746"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-012.md",
+      "group": ".wiki-ingest-src",
+      "size": 182,
+      "modified_at": "2026-04-09T14:13:02.838308+00:00",
+      "hash": "sha256:a55041cef665dcdac57b109d29ca08221c8f8e3c0732302aa7ced5f72804e5c3"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-013.md",
+      "group": ".wiki-ingest-src",
+      "size": 194,
+      "modified_at": "2026-04-09T14:13:02.838308+00:00",
+      "hash": "sha256:43d7d18f9dfba06fba75fbc7c510c2d9aed4b97e56c2d44f7e0075229a9f40bf"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-014.md",
+      "group": ".wiki-ingest-src",
+      "size": 242,
+      "modified_at": "2026-04-09T14:13:02.839309+00:00",
+      "hash": "sha256:1d20491b8108b6b8b39f126fc2f483755072a10ab9b73f3f57710a40f1535ee1"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-015.md",
+      "group": ".wiki-ingest-src",
+      "size": 194,
+      "modified_at": "2026-04-09T14:13:02.839309+00:00",
+      "hash": "sha256:1477de0490678e3cdf2144932617fa68f9a71088d03a30e6427aeaccc2e0ec83"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-016.md",
+      "group": ".wiki-ingest-src",
+      "size": 194,
+      "modified_at": "2026-04-09T14:13:02.839309+00:00",
+      "hash": "sha256:3ad377c9cb0f64e4e56f9d0038325173c511f47c7a78c5777d54c9b510b97eb2"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-017.md",
+      "group": ".wiki-ingest-src",
+      "size": 13577,
+      "modified_at": "2026-04-09T14:13:02.839309+00:00",
+      "hash": "sha256:ac0d4e60c7f0aa326ea72263a9ae181b6df29e98021c886b378a840c291e8edb"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-018.md",
+      "group": ".wiki-ingest-src",
+      "size": 17937,
+      "modified_at": "2026-04-09T14:13:02.839309+00:00",
+      "hash": "sha256:3b2034bac0042e42f3389a3a983607fbbca1dd8106942e340c31afd4a307cc9f"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-019.md",
+      "group": ".wiki-ingest-src",
+      "size": 11561,
+      "modified_at": "2026-04-09T14:13:02.839309+00:00",
+      "hash": "sha256:437c77639218ebfc2b4e50947305dc77f584e525c113df70019c79552d60a95a"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-020.md",
+      "group": ".wiki-ingest-src",
+      "size": 14135,
+      "modified_at": "2026-04-09T14:13:02.840308+00:00",
+      "hash": "sha256:9897e3781b38813d6cf92674e9e411522407d4a27a404fe9acedf6eebab6771b"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-021.md",
+      "group": ".wiki-ingest-src",
+      "size": 1502,
+      "modified_at": "2026-04-09T14:13:02.840308+00:00",
+      "hash": "sha256:05fdb1b2c5a74508895eb5d9801c2b015d51bc59787c6f6e6c8ec5a375049f25"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-022.md",
+      "group": ".wiki-ingest-src",
+      "size": 2019,
+      "modified_at": "2026-04-09T14:13:02.840308+00:00",
+      "hash": "sha256:4cf60da43b8002ab1b5c149d8d76200bae2004f223bd8cff6fb165cbf8971d56"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-023.md",
+      "group": ".wiki-ingest-src",
+      "size": 1763,
+      "modified_at": "2026-04-09T14:13:02.840308+00:00",
+      "hash": "sha256:9e6175f24569381afc158d957cb8d583241b32000a5b301afe7e0376f8ff8be5"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-024.md",
+      "group": ".wiki-ingest-src",
+      "size": 9714,
+      "modified_at": "2026-04-09T14:13:02.840308+00:00",
+      "hash": "sha256:7cb9c64dc49cb27669d6d1e4167d41409108fb9d4910e54fa3ca76946b52ace2"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-025.md",
+      "group": ".wiki-ingest-src",
+      "size": 555,
+      "modified_at": "2026-04-09T14:13:02.840308+00:00",
+      "hash": "sha256:b35c6d58cbbde3ee4a5dcfee03867791f50dc0f263e868323293a3a558c7f81a"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-026.md",
+      "group": ".wiki-ingest-src",
+      "size": 1789,
+      "modified_at": "2026-04-09T14:13:02.840308+00:00",
+      "hash": "sha256:08fc1b9d41920687958f7c524ebc66af32c5f56c5180767b8f381ba1fb97c9d4"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-027.md",
+      "group": ".wiki-ingest-src",
+      "size": 2588,
+      "modified_at": "2026-04-09T14:13:02.841308+00:00",
+      "hash": "sha256:34421de5c01e890a46b414d8b0d4849d4ecbc9ea3983d208e91b75b5ae8eb65e"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-028.md",
+      "group": ".wiki-ingest-src",
+      "size": 428,
+      "modified_at": "2026-04-09T14:13:02.841308+00:00",
+      "hash": "sha256:19deb99989d0237ad49d053fd743ae01e4651d50f372d1b409872c134e2db036"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-029.md",
+      "group": ".wiki-ingest-src",
+      "size": 28956,
+      "modified_at": "2026-04-09T14:13:02.841308+00:00",
+      "hash": "sha256:df9273f115ace6b923f0733b368385702ab98a1e791f1bce548175cf711d20aa"
+    },
+    {
+      "path": "docs/knowledge-base/.wiki-ingest-src/src-030.md",
+      "group": ".wiki-ingest-src",
+      "size": 25595,
+      "modified_at": "2026-04-09T14:13:02.841308+00:00",
+      "hash": "sha256:17a0725f2c963c40046cb344a20e5d0988f0ec3348222fcfc0fbe8cc436e5c87"
+    }
+  ]
+}

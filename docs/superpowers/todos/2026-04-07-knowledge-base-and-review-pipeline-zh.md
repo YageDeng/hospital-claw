@@ -38,14 +38,16 @@
 
 - [ ] **B2. 索引全部 26 份文档** *（知识库计划 → 任务 4）*
   - 创建 `docs/knowledge-base/` 目录结构（wiki/、index/、.manual-rules/）
-  - `qmd index docs/医院材料学习/`（PDF、DOCX、PPTX）
-  - `qmd index docs/knowledge-base/.staging/`（已转换的 XLSX）
+  - 在本机 **不要使用** `qmd index`（`qmd 1.0.5` 不提供该子命令）
+  - 运行 `python scripts/binary_docs_to_markdown.py` → `docs/knowledge-base/.staging-binary-md/`
+  - 运行 `python scripts/xlsx_to_markdown.py` → `docs/knowledge-base/.staging/`
+  - 使用 `qmd collection add` 刷新 `source_md` / `yycailiao_md` / `xlsxmd` 集合
   - 通过测试搜索验证："针法价格"、"推拿 一级"
   - 提交
 
 - [ ] **B3. 生成 Wiki** *（知识库计划 → 任务 5）*
   - 创建 `docs/knowledge-base/wiki-seed.yml`，包含 5 个分类
-  - 运行 `qmd wiki ingest`
+  - 使用 collection-relative `qmd wiki ingest` + `qmd wiki write`（不要只运行裸 `qmd wiki ingest`）
   - 检查生成的页面，必要时重新整理
   - 提交
 
@@ -118,11 +120,12 @@
 
 - [ ] **F1. 测试知识库更新 — docs 模式** *（知识库计划 → 任务 12）*
   - 向代理提问："更新知识库，扫描新文档"
-  - 验证清单检查 + 索引功能正常
+  - 验证 manifest 刷新 + `qmd collection add` 工作流正常
 
 - [ ] **F2. 测试 tcm-treatment-plan v2** *（知识库计划 → 任务 13）*
   - 要求代理生成方案：男性，45岁，75kg，颈部酸痛3个月
-  - 验证出现 MCP 工具调用 + 定价正确
+  - 验证出现知识库 search/query 调用 + 定价正确
+  - 如 `query` 首次模型下载卡住，可接受退回 `search` / `wiki_read`，但需记录
 
 - [ ] **F3. 测试 tcm-treatment-review v2 — 单张图片** *（流水线计划 → 任务 6）*
   - 提供 1 张图片（或文字描述）
@@ -182,7 +185,7 @@ hospital-claw/
 │   ├── tcm-treatment-plan/    (v1/, v2/, SKILL.md)
 │   ├── tcm-treatment-review/  (v1/, v2/, SKILL.md, standards.md, examples.md)
 │   ├── sh-yb-policy-monitor/  (v1/, v2/, SKILL.md, scripts/)
-│   └── knowledge-base-update/ (v1/, SKILL.md)
+│   └── knowledge-base-update/ (v1/, v2/, SKILL.md)
 │
 ├── data/
 │   └── reviews.db                             # 运行时产物 — 审核流水线 SQLite

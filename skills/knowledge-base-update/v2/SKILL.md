@@ -1,7 +1,7 @@
 ---
 name: knowledge-base-update
 version: v2
-description: 更新本地知识库。支持三种模式：docs（扫描新文档）、policy（从上海医保局网站获取最新政策）、rules（添加新规则）。适配 qmd 1.0.5：使用 collection add + wiki write，而不是 qmd index。
+description: 更新本地知识库。支持三种模式：docs（扫描新文档）、policy（从上海医保局网站获取最新政策）、rules（添加手动规则）。适配 qmd 1.0.5：使用 collection add + wiki write，而不是 qmd index。
 ---
 
 # 知识库更新（v2 — qmd 1.0.5 兼容）
@@ -176,4 +176,3 @@ docs/knowledge-base/
 ├── .manifest.json                 # KB 输入文件清单
 └── wiki-seed.yml                  # Wiki taxonomy seed
 ```
-

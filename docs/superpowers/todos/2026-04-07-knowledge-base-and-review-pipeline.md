@@ -38,14 +38,16 @@
 
 - [ ] **B2. Index all 26 documents** *(KB Plan → Task 4)*
   - Create `docs/knowledge-base/` directory structure (wiki/, index/, .manual-rules/)
-  - `qmd index docs/医院材料学习/` (PDF, DOCX, PPTX)
-  - `qmd index docs/knowledge-base/.staging/` (converted XLSX)
+  - Do **not** use `qmd index` on this machine (`qmd 1.0.5` has no `index`)
+  - Run `python scripts/binary_docs_to_markdown.py` → `docs/knowledge-base/.staging-binary-md/`
+  - Run `python scripts/xlsx_to_markdown.py` → `docs/knowledge-base/.staging/`
+  - Refresh collections with `qmd collection add` for `source_md` / `yycailiao_md` / `xlsxmd`
   - Verify with test searches: "针法价格", "推拿 一级"
   - Commit
 
 - [ ] **B3. Generate the wiki** *(KB Plan → Task 5)*
   - Create `docs/knowledge-base/wiki-seed.yml` with 5 categories
-  - Run `qmd wiki ingest`
+  - Use collection-relative `qmd wiki ingest` + `qmd wiki write` (not bare `qmd wiki ingest`)
   - Review generated pages, reorganize if needed
   - Commit
 
@@ -118,11 +120,12 @@
 
 - [ ] **F1. Test KB update — docs mode** *(KB Plan → Task 12)*
   - Ask agent: "更新知识库，扫描新文档"
-  - Verify manifest check + indexing works
+  - Verify manifest refresh + `qmd collection add` workflow works
 
 - [ ] **F2. Test tcm-treatment-plan v2** *(KB Plan → Task 13)*
   - Ask agent to generate a plan for: 男性，45岁，75kg，颈部酸痛3个月
-  - Verify MCP tool calls appear + correct pricing
+  - Verify KB search/query calls appear + correct pricing
+  - If `query` stalls on first-run model download, allow `search`/`wiki_read` fallback and record it
 
 - [ ] **F3. Test tcm-treatment-review v2 — single image** *(Pipeline Plan → Task 6)*
   - Provide 1 image (or text description)
@@ -182,7 +185,7 @@ hospital-claw/
 │   ├── tcm-treatment-plan/    (v1/, v2/, SKILL.md)
 │   ├── tcm-treatment-review/  (v1/, v2/, SKILL.md, standards.md, examples.md)
 │   ├── sh-yb-policy-monitor/  (v1/, v2/, SKILL.md, scripts/)
-│   └── knowledge-base-update/ (v1/, SKILL.md)
+│   └── knowledge-base-update/ (v1/, v2/, SKILL.md)
 │
 ├── data/
 │   └── reviews.db                             # Runtime — review pipeline SQLite

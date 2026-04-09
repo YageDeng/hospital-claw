@@ -25,3 +25,4 @@ Thumbs.db
 
 # Temp files from review pipeline
 tmp_review_*.json
+docs/治疗单样例/

@@ -121,3 +121,17 @@ Run 'qmd --help' for usage.
 - 尝试：将链式命令改为分号 `;` 顺序执行。
 - 结果：命令执行恢复正常，后续流程不受影响。
 
+## 后续仓库修复（已落地）
+
+- 已新增 `skills/knowledge-base-update/v2/SKILL.md`，并将根 `SKILL.md` 更新为兼容 `qmd 1.0.5` 的版本。
+- 已修正活跃技能中的过时指令：
+  - `skills/knowledge-base-update/SKILL.md`
+  - `skills/sh-yb-policy-monitor/SKILL.md`
+  - `skills/tcm-treatment-plan/SKILL.md`
+  - `skills/tcm-treatment-review/SKILL.md`
+- 已补齐知识库支撑文件：
+  - `docs/knowledge-base/.manifest.json`
+  - `docs/knowledge-base/.manual-rules/.gitkeep`
+  - `scripts/update_kb_manifest.py`
+- 已在 todo / plan / spec 文档中加入兼容性说明，避免后续继续按 `qmd index` 执行。
+

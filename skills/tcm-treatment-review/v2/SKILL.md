@@ -12,8 +12,9 @@ description: Review TCM (Traditional Chinese Medicine) treatment forms for medic
 
 ## 前置条件
 
-- MinerU MCP 服务应已启动（`qmd mcp --http --daemon`）
-- 如 MCP 不可用，维度五（收费合规性）使用 `standards.md` 中的静态价格作为后备，并在输出中注明："⚠️ 知识库未连接，使用静态价格参考，可能非最新。"
+- **优先**：MinerU MCP 服务已启动（`qmd mcp --http --daemon`），可使用 `query`、`search`、`wiki_read` 等工具查询知识库
+- **备选**：如 MCP 不可用，通过 Read 工具直接读取知识库 Markdown 源文件：`docs/knowledge-base/.staging/`（XLSX 转换）和 `docs/knowledge-base/.staging-binary-md/`（PDF/DOCX/PPTX 转换），以及 `docs/knowledge-base/.wiki-ingest-src/`（wiki 源文件）
+- **后备**：知识库文件均不可用时，使用本技能末尾的静态价格参考，并在输出中注明："⚠️ 价格来源：静态后备参考（知识库不可达），可能非最新。"
 
 ## 审查模式
 
@@ -21,36 +22,61 @@ description: Review TCM (Traditional Chinese Medicine) treatment forms for medic
 
 | 模式 | 触发条件 | 处理方式 |
 |------|---------|---------|
-| **单图审查** | 用户提供1张图片 | 直接在当前会话中审查 |
-| **批量审查** | 用户提供2张及以上图片 | 启动并发流水线，每张图片分配一个独立子代理 |
+| **单图审查** | 用户提供 1 张图片 | 直接在当前会话中审查 |
+| **批量审查** | 用户提供 2 张及以上图片 | 启动并发流水线，每张图片分配一个独立子代理 |
 
-## 一、批量审查流水线（2张及以上图片）
+## 一、批量审查流水线（2 张及以上图片）
 
 ### 流水线原则
 
-1. **一图一代理**：每个子代理（Task subagent）只处理一张图片，避免图片与结论错位
+1. **一图一代理**：每个子代理只处理一张图片，避免图片与结论错位
 2. **多表单拆分**：同一张图片中可能包含多份治疗单（叠放拍摄），每份单独审查
 3. **结果持久化**：每份审查结果保存到 SQLite 数据库
 4. **汇总等待**：主代理等待所有子代理完成后，生成统一汇总报告
 
 ### 第零步：查询知识库获取最新标准
 
-在初始化流水线前，通过 MCP 工具一次性查询最新标准，将结果嵌入到子代理的 prompt 中：
+在初始化流水线前，获取最新价格标准和政策规则，将结果嵌入到子代理的 prompt 中。
 
+#### 方式一：MCP 工具查询（优先）
+
+如 MinerU MCP 服务可用，使用以下工具查询：
 1. **价格标准**：`query "一级机构 中医 各项目 最新价格标准"`
 2. **针法规则**：`wiki_read "治疗方法规则/针法互斥与叠加规则"`
 3. **加收项规则**：`query "加收项 配对 基础项目 规则"`
 
 将查询结果整理为"最新价格参考"文本块，嵌入每个子代理的 prompt 中。
 
-如 MCP 不可用，使用下方静态后备价格（见"后备价格参考"）。
+如 `query` 首次运行触发模型下载并长时间停留在 `Gathering information`，优先退回 `search` / `wiki_read`。
+
+#### 方式二：直接读取知识库源文件（备选）
+
+如 MCP 不可用，**直接通过 Read 工具读取知识库 Markdown 源文件**：
+
+1. **价格标准**：读取 `docs/knowledge-base/.staging-binary-md/关于规范调整本市中医类医疗服务价格项目的通知.md`，搜索一级机构价格表
+2. **针法耗材对应**：读取 `docs/knowledge-base/.staging/2025年新立项中医针法耗材对应表_Sheet1.md`
+3. **针法规则/映射关系**：读取 `docs/knowledge-base/.staging/上海市中医针法类医疗服务价格项目立项指南映射关系（参考）(3)..md`
+
+关键知识库文件清单：
+| 文件路径 | 内容 |
+|---------|------|
+| `docs/knowledge-base/.staging-binary-md/关于规范调整本市中医类医疗服务价格项目的通知.md` | 一级/二级/三级机构 official 价格标准 |
+| `docs/knowledge-base/.staging/2025年新立项中医针法耗材对应表_Sheet1.md` | 针法项目与耗材对应关系 |
+| `docs/knowledge-base/.staging/上海市中医针法类医疗服务价格项目立项指南映射关系（参考）(3)..md` | 针法项目映射与计价规则 |
+
+将读取到的价格数据整理为"最新价格参考"文本块，嵌入每个子代理的 prompt 中。
+
+#### 方式三：静态后备价格（兜底）
+
+如知识库文件均不可读，使用下方"后备价格参考"中的静态价格，并在输出中明确标注："⚠️ 价格来源：静态后备参考（知识库不可达），可能非最新。"
 
 ### 第一步：初始化审查会话
 
 收到用户图片后，统计图片数量并初始化数据库：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\hospital-claw
+cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+.\.venv\Scripts\Activate.ps1
 python scripts/review_db.py init --image-count <图片数量>
 ```
 
@@ -58,7 +84,7 @@ python scripts/review_db.py init --image-count <图片数量>
 
 ### 第二步：为每张图片分派子代理
 
-对每张图片，使用 Task 工具创建一个独立子代理。**同时**分派多个子代理以并发处理。
+对每张图片，使用 Task/Subagent 工具创建一个独立子代理。**同时**分派多个子代理以并发处理。
 
 每个子代理的 prompt 必须包含以下完整信息：
 
@@ -124,10 +150,16 @@ python scripts/review_db.py init --image-count <图片数量>
 
 ### 维度六：治疗记录完整性
 每次治疗必须记录：治疗日期、起止时间、治疗项目、患者签名、医师签名。
-处方次数多于已记录次数属于正常（后续治疗尚未发生）。
-仅在以下情况判定为不通过：记录完全空白、已记录条目缺必要信息、治疗日期间隔超3个月。
+
+**重要**：处方规定的治疗次数可能多于已记录的次数，这属于正常情况——后续治疗尚未发生，不应视为不合格。审查时只需检查已完成的治疗记录是否规范（日期、时间、签名齐全），不以"记录次数 < 处方次数"作为不通过的依据。
+
+仅在以下情况判定为不通过：
+- 记录完全空白
+- 已记录条目缺少必要信息
+- 治疗日期间隔超过 3 个月
 
 ### 维度七：部位/穴位标注
+- 治疗项目应标明治疗的部位或穴位
 - 治疗单格式：部位/穴位栏必须填写
 - 治疗申请单格式：部位栏应填写（手写可接受）
 
@@ -164,8 +196,11 @@ JSON 文件格式（保存为 tmp_review_<image_index>_<form_index>.json）：
 
 保存到数据库的命令：
 
-cd c:\Users\roger\Documents\Pyproject\hospital-claw
+```powershell
+cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+.\.venv\Scripts\Activate.ps1
 python scripts/review_db.py save --session <SESSION_ID> --json-file tmp_review_<image_index>_<form_index>.json
+```
 
 保存成功后，删除临时 JSON 文件。
 
@@ -182,6 +217,8 @@ python scripts/review_db.py save --session <SESSION_ID> --json-file tmp_review_<
 分派所有子代理后，通过轮询数据库状态确认进度：
 
 ```powershell
+cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+.\.venv\Scripts\Activate.ps1
 python scripts/review_db.py status --session <SESSION_ID>
 ```
 
@@ -192,6 +229,8 @@ python scripts/review_db.py status --session <SESSION_ID>
 所有图片处理完成后，生成汇总报告：
 
 ```powershell
+cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+.\.venv\Scripts\Activate.ps1
 python scripts/review_db.py summary --session <SESSION_ID>
 ```
 
@@ -208,17 +247,30 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 
 ---
 
-## 二、单图审查（1张图片）
+## 二、单图审查（1 张图片）
 
-如果用户只提供了1张图片，无需启动流水线。直接在当前会话中执行审查。
+如果用户只提供了 1 张图片，无需启动流水线。直接在当前会话中执行审查。
 
 ### 第零步：查询知识库（如可用）
 
-通过 MCP 工具查询最新标准：
+#### 方式一：MCP 工具查询（优先）
+
+如 MinerU MCP 服务可用：
 1. **价格标准**：`query "一级机构 中医 各项目 最新价格标准"`
 2. **针法规则**：`wiki_read "治疗方法规则/针法互斥与叠加规则"`
 
-如 MCP 不可用，使用下方"后备价格参考"。
+如 `query` 首次运行触发模型下载并长时间停留在 `Gathering information`，优先退回 `search` / `wiki_read`。
+
+#### 方式二：直接读取知识库源文件（备选）
+
+如 MCP 不可用，**直接通过 Read 工具读取知识库 Markdown 源文件**：
+- **价格标准**：`docs/knowledge-base/.staging-binary-md/关于规范调整本市中医类医疗服务价格项目的通知.md`（搜索一级机构价格）
+- **针法耗材对应**：`docs/knowledge-base/.staging/2025年新立项中医针法耗材对应表_Sheet1.md`
+- **针法规则**：`docs/knowledge-base/.staging/上海市中医针法类医疗服务价格项目立项指南映射关系（参考）(3)..md`
+
+#### 方式三：静态后备价格（兜底）
+
+如知识库均不可达，使用下方"后备价格参考"，并标注："⚠️ 价格来源：静态后备参考（知识库不可达），可能非最新。"
 
 ### 第一步：识别表单数量
 
@@ -229,6 +281,10 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 - 非治疗单内容（收据、通知等）→ 忽略
 
 ### 第二步：逐表单审查
+
+上海沁宇堂中医门诊部（一级医疗机构）常见两种表单类型：
+- **治疗单**：处方样式，含项目/数量/单位/部位穴位栏，底部附治疗记录（日期/医生护士签名/患者签名）
+- **治疗申请单**：表格样式，含序号/项目/部位/方法/时长/次数/金额，底部附治疗记录表（治疗日期/起止时间/治疗项目/患者签名/医师签名）
 
 对每份独立的治疗单，按七大维度逐项检查。
 
@@ -274,9 +330,11 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 
 **优先通过知识库查询验证**每个项目的单价是否符合一级机构官方价格表。
 
-查询方式：`query "{项目名称} 一级 价格"`
+**方式一**：MCP `query "{项目名称} 一级 价格"`
 
-如知识库不可用，使用后备价格参考（见下方）并标注为："⚠️ 价格来源：静态参考（知识库未连接），可能非最新。"
+**方式二**：直接读取知识库源文件 `docs/knowledge-base/.staging-binary-md/关于规范调整本市中医类医疗服务价格项目的通知.md`，搜索项目名称所在行，确认一级机构价格
+
+如知识库不可用，使用后备价格参考（见下方）并标注为："⚠️ 价格来源：静态后备参考（知识库不可达），可能非最新。"
 
 #### 维度六：治疗记录完整性
 
@@ -287,13 +345,16 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 - 患者签名
 - 医师签名
 
-**重要**：处方规定的治疗次数可能多于已记录的次数，这属于正常情况。仅在以下情况判定为不通过：
-- 治疗记录完全空白
-- 已记录的条目缺少必要信息
-- 治疗日期之间存在明显不合理的间隔（超过3个月）
+**重要**：处方规定的治疗次数可能多于已记录的次数，这属于正常情况——后续治疗尚未发生，不应视为不合格。审查时只需检查已完成的治疗记录是否规范（日期、时间、签名齐全），不以"记录次数 < 处方次数"作为不通过的依据。
+
+仅在以下情况判定为不通过：
+- 治疗记录完全空白（无任何记录）
+- 已记录的条目缺少必要信息（如缺日期、缺签名）
+- 治疗日期之间存在明显不合理的间隔（如同一疗程内间隔超过 3 个月）
 
 #### 维度七：部位/穴位标注
 
+- 治疗项目应标明治疗的部位或穴位
 - 治疗单格式：部位/穴位栏必须填写
 - 治疗申请单格式：部位栏应填写（手写可接受）
 
@@ -323,7 +384,7 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 
 **总结**：[简要说明整体结论]
 
-**数据来源**：价格标准通过知识库查询验证（最后更新：[日期]）/ ⚠️ 使用静态价格参考
+**数据来源**：价格标准通过知识库验证（方式：MCP查询/直接读取源文件 [具体文件名]，最后更新：[日期]）/ ⚠️ 使用静态后备参考（知识库不可达）
 ```
 
 如果是批量审查，末尾附加汇总统计（由数据库自动生成）。
@@ -345,13 +406,29 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 
 ## 补充资料
 
-- 优先通过知识库（MCP）查询最新价格和政策规则
+### 知识库文件位置（直接读取备选）
+
+当 MCP 不可用时，直接读取以下知识库 Markdown 源文件获取最新价格标准：
+
+| 文件 | 路径 | 内容 |
+|------|------|------|
+| 中医类医疗服务价格项目通知 | `docs/knowledge-base/.staging-binary-md/关于规范调整本市中医类医疗服务价格项目的通知.md` | 一级/二级/三级机构 official 价格标准（如悬空灸21元、脊柱推拿70元等） |
+| 针法耗材对应表 | `docs/knowledge-base/.staging/2025年新立项中医针法耗材对应表_Sheet1.md` | 针法项目与耗材对应关系 |
+| 针法类立项指南映射 | `docs/knowledge-base/.staging/上海市中医针法类医疗服务价格项目立项指南映射关系（参考）(3)..md` | 针法项目映射与计价规则 |
+| 外治类立项指南 | `docs/knowledge-base/.staging-binary-md/上海市中医外治类医疗服务价格项目立项指南映射关系-参考.md` | 外治项目规则 |
+| 灸法/拔罐/推拿立项指南 | `docs/knowledge-base/.staging-binary-md/上海市中医类-灸法-拔罐-推拿-医疗服务价格项目立项指南映射关系-参考.md` | 灸法、拔罐、推拿项目规则 |
+| 骨伤类立项指南 | `docs/knowledge-base/.staging-binary-md/上海市中医骨伤类医疗服务价格项目立项指南映射关系-参考.md` | 骨伤项目规则（含针刀疗法） |
+
+### 其他资料
+
+- 优先通过知识库（MCP `query`/`search`/`wiki_read`）查询最新价格和政策规则
+- 如 MCP 不可用，使用**直接读取知识库源文件**方式获取最新价格
 - 完整价格表后备参考详见 [standards.md](standards.md)
 - 常见合格/不合格模式及示例详见 [examples.md](examples.md)
 - 审查结果数据库位于 `data/reviews.db`，可通过以下命令导出历史记录：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\hospital-claw
+cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+.\.venv\Scripts\Activate.ps1
 python scripts/review_db.py export --session <SESSION_ID>
 ```
-

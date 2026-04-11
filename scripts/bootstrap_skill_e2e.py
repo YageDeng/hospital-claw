@@ -14,7 +14,7 @@ import sys
 import time
 import venv
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 from typing import Sequence
 from urllib.error import HTTPError, URLError
@@ -43,8 +43,11 @@ class BootstrapConfig:
     workspace_root: Path
     allow_live: bool = False
     wechat_url: str | None = None
+    artifact_root: Path | None = None
     json_out: Path | None = None
     markdown_out: Path | None = None
+    enable_probes: bool = False
+    agent_driver: str | None = None
     install_machine_tools: bool = False
     restart_mcp: bool = False
     scenarios: list[str] = field(default_factory=list)
@@ -57,15 +60,25 @@ def default_wechat_url_path(workspace_root: Path) -> Path:
     return workspace_root / "data" / "skill_e2e" / "default_wechat_url.txt"
 
 
-def default_report_paths(workspace_root: Path, *, today: date | None = None) -> tuple[Path, Path]:
-    stamp = (today or date.today()).isoformat()
+def default_run_artifact_root(
+    workspace_root: Path,
+    *,
+    now: datetime | None = None,
+) -> Path:
+    stamp = (now or datetime.now()).strftime("%Y%m%d-%H%M%S-%f")
+    return workspace_root / "data" / "skill_e2e" / "runs" / stamp
+
+
+def default_report_paths(
+    workspace_root: Path,
+    *,
+    artifact_root: Path | None = None,
+    now: datetime | None = None,
+) -> tuple[Path, Path]:
+    base_dir = (artifact_root or default_run_artifact_root(workspace_root, now=now)).resolve()
     return (
-        workspace_root / "data" / "skill_e2e" / "latest-bootstrap-report.json",
-        workspace_root
-        / "docs"
-        / "superpowers"
-        / "test-results"
-        / f"{stamp}-local-all-skills-e2e-bootstrap.md",
+        base_dir / "bootstrap-report.json",
+        base_dir / "bootstrap-report.md",
     )
 
 
@@ -79,6 +92,10 @@ def build_runner_env(config: BootstrapConfig, base_env: dict[str, str] | None = 
             value = local_default.read_text(encoding="utf-8").strip()
             if value:
                 env["SKILL_E2E_WECHAT_URL"] = value
+    if config.enable_probes or config.agent_driver:
+        env["SKILL_E2E_ENABLE_PROBES"] = "1"
+    if config.agent_driver:
+        env["SKILL_E2E_AGENT_DRIVER"] = config.agent_driver
     return env
 
 
@@ -89,6 +106,8 @@ def build_harness_command(config: BootstrapConfig, python_executable: str) -> li
     ]
     if config.allow_live:
         command.append("--allow-live")
+    if config.artifact_root:
+        command.extend(["--artifact-root", config.artifact_root.as_posix()])
     for scenario in config.scenarios:
         command.extend(["--scenario", scenario])
     if config.json_out:
@@ -309,6 +328,15 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--json-out", type=Path, default=None, help="Optional JSON report output path.")
     parser.add_argument("--markdown-out", type=Path, default=None, help="Optional Markdown report output path.")
     parser.add_argument(
+        "--enable-probes",
+        action="store_true",
+        help="Enable external probe scenarios for the underlying skill E2E harness.",
+    )
+    parser.add_argument(
+        "--agent-driver",
+        help="External command used to run agent probes. Implies --enable-probes.",
+    )
+    parser.add_argument(
         "--install-machine-tools",
         action="store_true",
         help="Attempt machine-level qmd installation when qmd is missing.",
@@ -334,13 +362,20 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def build_config(args: argparse.Namespace) -> BootstrapConfig:
     workspace_root = workspace_root_from_script()
-    json_out, markdown_out = default_report_paths(workspace_root)
+    artifact_root = default_run_artifact_root(workspace_root)
+    json_out, markdown_out = default_report_paths(
+        workspace_root,
+        artifact_root=artifact_root,
+    )
     return BootstrapConfig(
         workspace_root=workspace_root,
         allow_live=args.allow_live,
         wechat_url=args.wechat_url,
+        artifact_root=artifact_root,
         json_out=args.json_out or json_out,
         markdown_out=args.markdown_out or markdown_out,
+        enable_probes=args.enable_probes or bool(args.agent_driver),
+        agent_driver=args.agent_driver,
         install_machine_tools=args.install_machine_tools,
         restart_mcp=args.restart_mcp,
         scenarios=list(args.scenario),

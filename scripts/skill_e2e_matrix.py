@@ -16,7 +16,7 @@ from typing import Callable, Literal, Sequence
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from skill_e2e_probes import ProbeOutcome, run_agent_probe
+from skill_e2e_probes import ProbeOutcome, probes_enabled, run_agent_probe
 
 StatusValue = Literal["PASS", "FAIL", "SKIP"]
 
@@ -47,6 +47,8 @@ class ScenarioResult:
     summary: str
     details: list[str] = field(default_factory=list)
     artifacts: list[Path | str] = field(default_factory=list)
+    live: bool = False
+    optional_probe: bool = False
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -59,6 +61,8 @@ class ScenarioResult:
                 artifact.as_posix() if isinstance(artifact, Path) else str(artifact)
                 for artifact in self.artifacts
             ],
+            "live": self.live,
+            "optional_probe": self.optional_probe,
         }
 
 
@@ -76,13 +80,14 @@ def build_default_context(
     workspace_root: Path | None = None,
     *,
     allow_live: bool = False,
+    artifact_root: Path | None = None,
 ) -> SkillE2EContext:
     root = (workspace_root or Path(__file__).resolve().parent.parent).resolve()
-    artifact_root = root / "data" / "skill_e2e"
-    artifact_root.mkdir(parents=True, exist_ok=True)
+    resolved_artifact_root = (artifact_root or (root / "data" / "skill_e2e")).resolve()
+    resolved_artifact_root.mkdir(parents=True, exist_ok=True)
     return SkillE2EContext(
         workspace_root=root,
-        artifact_root=artifact_root,
+        artifact_root=resolved_artifact_root,
         python_executable=sys.executable,
         allow_live=allow_live,
     )
@@ -142,13 +147,6 @@ def list_scenarios(*, include_probes: bool = False) -> list[SkillScenario]:
                     optional_probe=True,
                 ),
                 SkillScenario(
-                    scenario_id="tcm_treatment_plan_agent_probe",
-                    skill_id="tcm-treatment-plan",
-                    description="Optional external agent probe for the treatment-plan skill prompt path.",
-                    runner=_run_tcm_treatment_plan_agent_probe,
-                    optional_probe=True,
-                ),
-                SkillScenario(
                     scenario_id="wechat_daily_monitor_discovered_probe",
                     skill_id="wechat-daily-monitor",
                     description="Optional external agent probe for discovered-link WeChat monitoring.",
@@ -191,17 +189,24 @@ def run_selected_scenarios(
                     scenario.scenario_id,
                     scenario.skill_id,
                     "Live scenario skipped because --allow-live was not provided",
+                    live=scenario.live,
+                    optional_probe=scenario.optional_probe,
                 )
             )
             continue
         try:
-            results.append(scenario.runner(context))
+            result = scenario.runner(context)
+            result.live = result.live or scenario.live
+            result.optional_probe = result.optional_probe or scenario.optional_probe
+            results.append(result)
         except Exception as error:  # pragma: no cover - last-resort safety net
             results.append(
                 _fail_result(
                     scenario.scenario_id,
                     scenario.skill_id,
                     f"Unhandled exception: {error}",
+                    live=scenario.live,
+                    optional_probe=scenario.optional_probe,
                 )
             )
     return results
@@ -214,6 +219,8 @@ def _pass_result(
     *,
     details: Sequence[str] | None = None,
     artifacts: Sequence[Path | str] | None = None,
+    live: bool = False,
+    optional_probe: bool = False,
 ) -> ScenarioResult:
     return ScenarioResult(
         scenario_id=scenario_id,
@@ -222,6 +229,8 @@ def _pass_result(
         summary=summary,
         details=list(details or []),
         artifacts=list(artifacts or []),
+        live=live,
+        optional_probe=optional_probe,
     )
 
 
@@ -231,6 +240,9 @@ def _skip_result(
     summary: str,
     *,
     details: Sequence[str] | None = None,
+    artifacts: Sequence[Path | str] | None = None,
+    live: bool = False,
+    optional_probe: bool = False,
 ) -> ScenarioResult:
     return ScenarioResult(
         scenario_id=scenario_id,
@@ -238,6 +250,9 @@ def _skip_result(
         status="SKIP",
         summary=summary,
         details=list(details or []),
+        artifacts=list(artifacts or []),
+        live=live,
+        optional_probe=optional_probe,
     )
 
 
@@ -248,6 +263,8 @@ def _fail_result(
     *,
     details: Sequence[str] | None = None,
     artifacts: Sequence[Path | str] | None = None,
+    live: bool = False,
+    optional_probe: bool = False,
 ) -> ScenarioResult:
     return ScenarioResult(
         scenario_id=scenario_id,
@@ -256,6 +273,8 @@ def _fail_result(
         summary=summary,
         details=list(details or []),
         artifacts=list(artifacts or []),
+        live=live,
+        optional_probe=optional_probe,
     )
 
 
@@ -369,6 +388,33 @@ def _write_text(path: Path, content: str) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
     return path
+
+
+def _prefixed_result_details(prefix: str, summary: str, details: Sequence[str]) -> list[str]:
+    items = list(details)
+    if summary and summary not in items:
+        items.insert(0, summary)
+    return [f"{prefix}: {item}" for item in items]
+
+
+def _unique_artifacts(artifacts: Sequence[Path | str]) -> list[Path | str]:
+    deduped: list[Path | str] = []
+    seen: set[str] = set()
+    for artifact in artifacts:
+        key = artifact.as_posix() if isinstance(artifact, Path) else str(artifact)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(artifact)
+    return deduped
+
+
+def _split_multiline_values(raw_value: str) -> list[str]:
+    values = [line.strip() for line in raw_value.splitlines() if line.strip()]
+    if values:
+        return values
+    stripped = raw_value.strip()
+    return [stripped] if stripped else []
 
 
 def _load_json_from_stdout(completed: subprocess.CompletedProcess[str]) -> dict[str, object]:
@@ -533,7 +579,7 @@ def _run_review_db_local(context: SkillE2EContext) -> ScenarioResult:
     )
 
 
-def _run_tcm_treatment_plan_prereqs(context: SkillE2EContext) -> ScenarioResult:
+def _run_tcm_treatment_plan_prereq_subcheck(context: SkillE2EContext) -> ScenarioResult:
     scenario_id = "tcm_treatment_plan_prereqs"
     skill_id = "tcm-treatment-plan"
     details: list[str] = []
@@ -577,6 +623,137 @@ def _run_tcm_treatment_plan_prereqs(context: SkillE2EContext) -> ScenarioResult:
         skill_id,
         "Neither qmd nor documented fallback assets are available",
         details=details,
+    )
+
+
+def _build_tcm_treatment_plan_probe_payload(context: SkillE2EContext) -> tuple[Path, dict[str, object]]:
+    case_path = context.fixture_root() / "tcm_plan_case.json"
+    if not case_path.exists():
+        raise FileNotFoundError(f"Missing treatment-plan case fixture: {case_path}")
+
+    case_payload = json.loads(case_path.read_text(encoding="utf-8"))
+    if not isinstance(case_payload, dict):
+        raise ValueError("Treatment-plan case fixture must contain a JSON object")
+
+    payload = dict(case_payload)
+    payload.setdefault(
+        "required_sections",
+        ["患者信息", "辨证分析", "治疗方案", "费用汇总", "数据来源"],
+    )
+    payload.setdefault(
+        "required_patient_fields",
+        ["gender", "age", "weight_kg", "chief_complaint", "optional_context"],
+    )
+    payload.setdefault(
+        "expected_keywords",
+        ["第一阶段", "第二阶段", "中医诊断", "单次费用", "治疗频次", "数据来源"],
+    )
+    payload["case_file"] = str(case_path)
+    payload["case_data"] = case_payload
+    return case_path, payload
+
+
+def _run_tcm_treatment_plan_probe(
+    context: SkillE2EContext,
+    *,
+    probe_name: str = "tcm_treatment_plan_prereqs",
+) -> ProbeOutcome:
+    _, payload = _build_tcm_treatment_plan_probe_payload(context)
+    prompt = (
+        "Use the treatment-plan skill on the committed synthetic patient case fixture. "
+        "Return success only if the response is written in Chinese and includes patient info, "
+        "diagnosis, at least two phased treatment sections, fee breakdowns, treatment frequency, "
+        "and data-source notes."
+    )
+    return run_agent_probe(
+        probe_name,
+        prompt,
+        context.workspace_root,
+        payload,
+        timeout=context.timeout_seconds,
+        env=context.environment,
+    )
+
+
+def _run_tcm_treatment_plan_prereqs(context: SkillE2EContext) -> ScenarioResult:
+    scenario_id = "tcm_treatment_plan_prereqs"
+    skill_id = "tcm-treatment-plan"
+    prereq_result = _run_tcm_treatment_plan_prereq_subcheck(context)
+    probe_requested = probes_enabled(context.environment)
+    details = _prefixed_result_details(
+        "prereq",
+        prereq_result.summary,
+        prereq_result.details,
+    )
+    artifacts = _unique_artifacts(prereq_result.artifacts)
+
+    if prereq_result.status == "FAIL":
+        return _fail_result(
+            scenario_id,
+            skill_id,
+            prereq_result.summary,
+            details=details,
+            artifacts=artifacts,
+            optional_probe=probe_requested,
+        )
+
+    if not probe_requested:
+        return _pass_result(
+            scenario_id,
+            skill_id,
+            prereq_result.summary,
+            details=details,
+            artifacts=artifacts,
+        )
+
+    try:
+        probe_outcome = _run_tcm_treatment_plan_probe(context)
+    except (FileNotFoundError, ValueError, json.JSONDecodeError) as error:
+        return _fail_result(
+            scenario_id,
+            skill_id,
+            f"Treatment-plan probe setup failed: {error}",
+            details=details,
+            artifacts=artifacts,
+            optional_probe=True,
+        )
+
+    details.extend(
+        _prefixed_result_details(
+            "probe",
+            probe_outcome.summary,
+            probe_outcome.details,
+        )
+    )
+    artifacts = _unique_artifacts([*artifacts, *probe_outcome.artifacts])
+
+    if probe_outcome.status == "PASS":
+        return _pass_result(
+            scenario_id,
+            skill_id,
+            "Composite treatment-plan validation passed",
+            details=details,
+            artifacts=artifacts,
+            optional_probe=True,
+        )
+
+    if probe_outcome.status == "SKIP":
+        return _skip_result(
+            scenario_id,
+            skill_id,
+            f"Treatment-plan probe skipped after prerequisite validation: {probe_outcome.summary}",
+            details=details,
+            artifacts=artifacts,
+            optional_probe=True,
+        )
+
+    return _fail_result(
+        scenario_id,
+        skill_id,
+        f"Treatment-plan probe failed after prerequisite validation: {probe_outcome.summary}",
+        details=details,
+        artifacts=artifacts,
+        optional_probe=True,
     )
 
 
@@ -897,8 +1074,8 @@ def _run_knowledge_base_rules_live(context: SkillE2EContext) -> ScenarioResult:
 def _run_wechat_daily_monitor_manual_url(context: SkillE2EContext) -> ScenarioResult:
     scenario_id = "wechat_daily_monitor_manual_url"
     skill_id = "wechat-daily-monitor"
-    wechat_url = context.environment.get("SKILL_E2E_WECHAT_URL", "").strip()
-    if not wechat_url:
+    wechat_urls = _split_multiline_values(context.environment.get("SKILL_E2E_WECHAT_URL", ""))
+    if not wechat_urls:
         return _skip_result(
             scenario_id,
             skill_id,
@@ -924,7 +1101,7 @@ def _run_wechat_daily_monitor_manual_url(context: SkillE2EContext) -> ScenarioRe
     pipeline_run = _run_python_script(
         context,
         "scripts/wechat_article_pipeline.py",
-        wechat_url,
+        *wechat_urls,
         "--output-dir",
         str(output_root),
         "--save-html",
@@ -1041,6 +1218,9 @@ def _probe_result_to_scenario(
     scenario_id: str,
     skill_id: str,
     outcome: ProbeOutcome,
+    *,
+    live: bool = False,
+    optional_probe: bool = True,
 ) -> ScenarioResult:
     return ScenarioResult(
         scenario_id=scenario_id,
@@ -1049,6 +1229,8 @@ def _probe_result_to_scenario(
         summary=outcome.summary,
         details=outcome.details,
         artifacts=outcome.artifacts,
+        live=live,
+        optional_probe=optional_probe,
     )
 
 
@@ -1077,25 +1259,12 @@ def _run_tcm_treatment_review_agent_probe(context: SkillE2EContext) -> ScenarioR
 
 
 def _run_tcm_treatment_plan_agent_probe(context: SkillE2EContext) -> ScenarioResult:
-    scenario_id = "tcm_treatment_plan_agent_probe"
-    prompt = (
-        "Use the treatment-plan skill on the committed patient case fixture and "
-        "verify the response contains phased treatment sections and pricing references."
-    )
-    payload = {
-        "case_file": str(context.fixture_root() / "tcm_plan_case.json"),
-        "expected_keywords": ["第一阶段", "第二阶段", "数据来源"],
-    }
     return _probe_result_to_scenario(
-        scenario_id,
+        "tcm_treatment_plan_agent_probe",
         "tcm-treatment-plan",
-        run_agent_probe(
-            scenario_id,
-            prompt,
-            context.workspace_root,
-            payload,
-            timeout=context.timeout_seconds,
-            env=context.environment,
+        _run_tcm_treatment_plan_probe(
+            context,
+            probe_name="tcm_treatment_plan_agent_probe",
         ),
     )
 
@@ -1121,4 +1290,5 @@ def _run_wechat_daily_monitor_discovered_probe(context: SkillE2EContext) -> Scen
             timeout=context.timeout_seconds,
             env=context.environment,
         ),
+        live=True,
     )

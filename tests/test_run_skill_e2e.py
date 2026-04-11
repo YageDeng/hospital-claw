@@ -128,6 +128,23 @@ class TestRunSkillE2E(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("Unknown scenario", stderr.getvalue())
 
+    def test_main_forwards_explicit_artifact_root_to_context_builder(self):
+        fake_context = object()
+        stdout = StringIO()
+        artifact_root = Path("C:/repo/data/skill_e2e/runs/20260411-130231-456789")
+
+        with patch("run_skill_e2e.build_default_context", return_value=fake_context) as build_context, patch(
+            "run_skill_e2e.run_selected_scenarios",
+            return_value=[],
+        ), patch("sys.stdout", stdout):
+            exit_code = main(["--artifact-root", str(artifact_root)])
+
+        self.assertEqual(exit_code, 0)
+        build_context.assert_called_once_with(
+            allow_live=False,
+            artifact_root=artifact_root,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

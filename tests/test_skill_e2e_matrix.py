@@ -18,6 +18,7 @@ from skill_e2e_matrix import (  # type: ignore[import-not-found]
     _run_subprocess,
     _run_sh_yb_policy_monitor_live,
     _run_tcm_treatment_plan_prereqs,
+    _run_wechat_daily_monitor_manual_url,
     build_default_context,
     list_scenarios,
     run_selected_scenarios,
@@ -177,6 +178,34 @@ class TestSkillE2EMatrix(unittest.TestCase):
 
         self.assertEqual(result.status, "FAIL")
         self.assertIn("fetch errors", result.summary.lower())
+
+    def test_wechat_manual_url_splits_multiline_env_input_into_multiple_pipeline_args(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            context = build_default_context(Path(tmpdir), allow_live=True)
+            first_url = "https://mp.weixin.qq.com/s/first"
+            second_url = "https://mp.weixin.qq.com/s/second"
+            context.environment = {
+                "SKILL_E2E_WECHAT_URL": f"{first_url}\n{second_url}",
+            }
+            completed = subprocess.CompletedProcess(
+                args=["python", "wechat_article_pipeline.py"],
+                returncode=1,
+                stdout="",
+                stderr="pipeline failed",
+            )
+
+            with patch("skill_e2e_matrix._command_exists", return_value=True), patch(
+                "skill_e2e_matrix._can_reach_url", return_value=True
+            ), patch(
+                "skill_e2e_matrix._run_python_script", return_value=completed
+            ) as run_python_script:
+                result = _run_wechat_daily_monitor_manual_url(context)
+
+        self.assertEqual(result.status, "FAIL")
+        self.assertIn("pipeline failed", result.details[0])
+        self.assertEqual(run_python_script.call_args.args[2], first_url)
+        self.assertEqual(run_python_script.call_args.args[3], second_url)
+        self.assertEqual(run_python_script.call_args.args[4], "--output-dir")
 
     def test_run_subprocess_resolves_windows_cmd_shims_from_path(self):
         if os.name != "nt":

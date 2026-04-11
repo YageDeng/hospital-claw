@@ -22,6 +22,15 @@ def _escape_markdown_cell(value: str) -> str:
     return value.replace("\n", " ").replace("|", "\\|").strip()
 
 
+def _result_labels(result: ScenarioResult) -> str:
+    labels: list[str] = []
+    if result.live:
+        labels.append("live")
+    if result.optional_probe:
+        labels.append("probe")
+    return ", ".join(labels) if labels else "-"
+
+
 def summarize_results(results: Sequence[ScenarioResult]) -> dict[str, int]:
     summary = {"PASS": 0, "FAIL": 0, "SKIP": 0, "total": len(results)}
     for result in results:
@@ -51,18 +60,44 @@ def render_markdown_report(results: Sequence[ScenarioResult]) -> str:
         "",
         "## Scenarios",
         "",
-        "| Scenario | Skill | Status | Summary |",
-        "|----------|-------|--------|---------|",
+        "| Scenario | Skill | Status | Labels | Summary |",
+        "|----------|-------|--------|--------|---------|",
     ]
     for result in results:
         lines.append(
-            "| {scenario} | {skill} | {status} | {summary} |".format(
+            "| {scenario} | {skill} | {status} | {labels} | {summary} |".format(
                 scenario=_escape_markdown_cell(result.scenario_id),
                 skill=_escape_markdown_cell(result.skill_id),
                 status=_escape_markdown_cell(result.status),
+                labels=_escape_markdown_cell(_result_labels(result)),
                 summary=_escape_markdown_cell(result.summary),
             )
         )
+    if results:
+        lines.extend(["", "## Scenario Details", ""])
+    for result in results:
+        lines.extend(
+            [
+                f"### `{result.scenario_id}`",
+                "",
+                f"- Skill: `{result.skill_id}`",
+                f"- Status: `{result.status}`",
+                f"- Labels: `{_result_labels(result)}`",
+                f"- Summary: {_escape_markdown_cell(result.summary)}",
+            ]
+        )
+        if result.details:
+            lines.extend(["", "#### Details"])
+            lines.extend(f"- {_escape_markdown_cell(detail)}" for detail in result.details)
+        if result.artifacts:
+            lines.extend(["", "#### Artifacts"])
+            lines.extend(
+                "- `{}`".format(
+                    artifact.as_posix() if isinstance(artifact, Path) else str(artifact)
+                )
+                for artifact in result.artifacts
+            )
+        lines.append("")
     return "\n".join(lines) + "\n"
 
 
@@ -111,6 +146,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Optional Markdown report output path.",
     )
+    parser.add_argument(
+        "--artifact-root",
+        type=Path,
+        default=None,
+        help="Optional artifact root for scenario outputs written under data/skill_e2e.",
+    )
     return parser.parse_args(argv)
 
 
@@ -126,7 +167,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"  {scenario.description}")
         return 0
 
-    context = build_default_context(allow_live=args.allow_live)
+    context = build_default_context(
+        allow_live=args.allow_live,
+        artifact_root=args.artifact_root,
+    )
     try:
         results = run_selected_scenarios(
             context,

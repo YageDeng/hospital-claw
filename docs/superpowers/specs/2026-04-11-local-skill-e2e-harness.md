@@ -25,13 +25,10 @@ The harness is designed for this machine and this repository checkout. It does *
 
 Default runtime artifacts are written under ignored paths:
 
-- `data/skill_e2e/`
+- direct `run_skill_e2e.py` runs default to `data/skill_e2e/`
+- bootstrap runs default to `data/skill_e2e/runs/<timestamp>/`
 
-Optional reports can be written anywhere, including:
-
-- `docs/superpowers/test-results/`
-
-When you run the bootstrap entry point, it supplies default JSON and Markdown report paths automatically unless you override them.
+When you run the bootstrap entry point, it now creates a fresh timestamped run folder automatically unless you override the output paths. That run folder becomes the artifact root for scenario outputs and also stores the default JSON and Markdown reports for that specific execution.
 
 ## Commands
 
@@ -43,6 +40,7 @@ cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
 
 python scripts/run_skill_e2e.py --list
 python scripts/run_skill_e2e.py --scenario review_db_local
+python scripts/run_skill_e2e.py --scenario tcm_treatment_plan_prereqs
 python scripts/run_skill_e2e.py --allow-live
 python scripts/run_skill_e2e.py --allow-live --markdown-out "docs/superpowers/test-results/2026-04-11-local-all-skills-e2e.md"
 ```
@@ -55,6 +53,7 @@ Preferred Python-core entry:
 cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
 python scripts/bootstrap_skill_e2e.py --allow-live --scenario review_db_local
 python scripts/bootstrap_skill_e2e.py --allow-live --wechat-url "<mp.weixin url>"
+python scripts/bootstrap_skill_e2e.py --scenario tcm_treatment_plan_prereqs --enable-probes --agent-driver "python path/to/probe_driver.py"
 ```
 
 Windows wrapper:
@@ -79,7 +78,8 @@ By default, the bootstrap path is **project-level setup**:
 - install the known Python package set needed by the harness and local skill flows
 - reuse existing `qmd` if already installed
 - start or reuse `qmd mcp --http --daemon`
-- invoke `scripts/run_skill_e2e.py`
+- create a fresh `data/skill_e2e/runs/<timestamp>/` folder for this run
+- invoke `scripts/run_skill_e2e.py` with that folder as the artifact root
 
 Optional machine-level install mode:
 
@@ -92,22 +92,30 @@ Useful bootstrap flags:
 - `--allow-live`
 - `--scenario <id>` (repeatable)
 - `--wechat-url <url>`
+- `--enable-probes`
+- `--agent-driver <command>`
 - `--restart-mcp`
 - `--skip-python-install`
 - `--install-machine-tools`
+
+Bootstrap probe activation rules:
+
+- the bootstrap automatically inherits `SKILL_E2E_ENABLE_PROBES` and `SKILL_E2E_AGENT_DRIVER` from the shell environment when present
+- `--enable-probes` turns probe mode on explicitly
+- `--agent-driver` both sets the driver command and implies `--enable-probes`
+- explicit CLI values take precedence over inherited environment variables
 
 ## Scenario Matrix
 
 | Scenario ID | Skill | Type | Notes |
 |------------|-------|------|------|
 | `review_db_local` | `tcm-treatment-review` | Always-on local | Exercises the real `review_db.py` CLI with committed fixtures |
-| `tcm_treatment_plan_prereqs` | `tcm-treatment-plan` | Always-on local | Verifies KB prerequisites or documented static fallback assets |
+| `tcm_treatment_plan_prereqs` | `tcm-treatment-plan` | Always-on local + optional probe | Always records KB/static-fallback prerequisite evidence; when probes are enabled, also runs the external treatment-plan prompt flow against a synthetic patient case |
 | `sh_yb_policy_monitor_live` | `sh-yb-policy-monitor` | Live-with-skips | Uses `fetch_policies.py` with a harness-owned output dir |
 | `knowledge_base_docs_live` | `knowledge-base-update` | Live-with-skips | Runs docs-mode conversion + manifest + `qmd collection add` in a temp workspace |
 | `knowledge_base_rules_live` | `knowledge-base-update` | Live-with-skips | Injects a temporary manual rule and verifies manifest + `qmd collection add` |
 | `wechat_daily_monitor_manual_url` | `wechat-daily-monitor` | Live-with-skips | Fetches a live WeChat article into a temp workspace and verifies KB side effects |
 | `tcm_treatment_review_agent_probe` | `tcm-treatment-review` | Optional probe | Only enabled when external probe driver support is configured |
-| `tcm_treatment_plan_agent_probe` | `tcm-treatment-plan` | Optional probe | Only enabled when external probe driver support is configured |
 | `wechat_daily_monitor_discovered_probe` | `wechat-daily-monitor` | Optional probe, live-with-skips | Intended for discovered-link validation when local WeChat discovery is available; still requires `--allow-live` |
 
 ## Live Dependency Rules
@@ -130,11 +138,27 @@ Typical skip reasons:
 
 | Variable | Purpose |
 |---------|---------|
-| `SKILL_E2E_WECHAT_URL` | Required for the live manual-URL WeChat scenario |
+| `SKILL_E2E_WECHAT_URL` | Required for the live manual-URL WeChat scenario; may contain one URL or multiple newline-delimited URLs |
 | `SKILL_E2E_ENABLE_PROBES=1` | Enables probe scenarios in the runner |
 | `SKILL_E2E_AGENT_DRIVER` | External command used by optional probe scenarios |
 | `SKILL_E2E_WECHAT_DISCOVERY_HINT` | Optional input for discovered-link probe mode |
 | `SH_YB_POLICY_SAVE_DIR` | Optional policy-monitor save dir override used by the bootstrap or direct runs |
+
+## Reading Detailed Results
+
+The saved Markdown report now includes:
+
+- the summary table
+- scenario labels such as `live` and `probe`
+- a per-scenario details section
+- artifact paths you can open directly to inspect generated evidence
+
+For bootstrap runs, the default machine-readable JSON report and human-readable Markdown report now live together inside the run folder:
+
+- `data/skill_e2e/runs/<timestamp>/bootstrap-report.json`
+- `data/skill_e2e/runs/<timestamp>/bootstrap-report.md`
+
+That same run folder also contains the scenario-specific output directories for that execution, so multiple bootstrap runs no longer overwrite one another.
 
 ## Probe Contract
 
@@ -152,7 +176,7 @@ In other words:
 From `docs/superpowers/todos/2026-04-10-openclaw-review-and-wechat-daily-monitor.md`:
 
 - `tcm-treatment-review`: covered locally by `review_db_local`; host image-review orchestration still requires separate OpenClaw validation
-- `tcm-treatment-plan`: covered locally by `tcm_treatment_plan_prereqs`; full narrative plan generation is covered by the optional agent probe path
+- `tcm-treatment-plan`: covered locally by `tcm_treatment_plan_prereqs`; when probes are enabled, the same scenario also validates the external prompt flow against the synthetic patient fixture
 - `sh-yb-policy-monitor`: covered locally by `sh_yb_policy_monitor_live`
 - `knowledge-base-update`: covered locally by `knowledge_base_docs_live` and `knowledge_base_rules_live`
 - `wechat-daily-monitor`: covered locally by `wechat_daily_monitor_manual_url`; discovered-link path is covered by the optional probe scenario

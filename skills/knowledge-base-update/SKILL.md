@@ -1,7 +1,7 @@
 ---
 name: knowledge-base-update
 version: v2
-description: 更新本地知识库。支持三种模式：docs（扫描新文档）、policy（从上海医保局网站获取最新政策）、rules（添加新规则）。适配 qmd 1.0.5：使用 collection add + wiki write，而不是 qmd index。
+description: 更新本地知识库。支持三种模式：docs（扫描新文档与公众号监测原生 Markdown）、policy（从上海医保局网站获取最新政策）、rules（添加新规则）。适配 qmd 1.0.5：使用 collection add + wiki write，而不是 qmd index。
 ---
 
 # 知识库更新（v2 — qmd 1.0.5 兼容）
@@ -14,7 +14,7 @@ description: 更新本地知识库。支持三种模式：docs（扫描新文档
 
 | 模式 | 触发语 | 说明 |
 |------|--------|------|
-| **docs** | "更新知识库" / "添加新文档到知识库" | 扫描 `docs/医院材料学习/` 中的新文档，转换后更新检索集合 |
+| **docs** | "更新知识库" / "添加新文档到知识库" / "同步公众号监测文章到知识库" / "刷新公众号每日监测知识库" | 扫描 `docs/医院材料学习/` 中的新文档与原生 Markdown（包括 `docs/医院材料学习/公众号每日监测/`），转换后更新检索集合 |
 | **policy** | "获取最新政策并更新知识库" | 调用 `sh-yb-policy-monitor` 获取新政策，然后执行 docs 流程 |
 | **rules** | "添加新规则到知识库" | 接收用户手动输入的规则内容，保存并索引 |
 
@@ -41,6 +41,11 @@ description: 更新本地知识库。支持三种模式：docs（扫描新文档
 
 询问用户或从上下文判断使用哪种模式（docs / policy / rules）。
 
+补充约定：
+
+- `公众号每日监测` 产物如果已经落在 `docs/医院材料学习/公众号每日监测/`，默认复用 `docs` 模式，不新增独立 `wechat` 模式
+- 当 `wechat-daily-monitor` 技能刚保存完文章 Markdown 后，应立即执行本技能的 `docs` 最小刷新流程，至少刷新 `source_md` 与 manifest
+
 ### 第二步：按模式执行数据获取
 
 #### 模式一：docs（文档扫描）
@@ -55,7 +60,7 @@ python scripts/xlsx_to_markdown.py --input "docs/医院材料学习" --output "d
 python scripts/binary_docs_to_markdown.py --input "docs/医院材料学习" --output "docs/knowledge-base/.staging-binary-md"
 ```
 
-3. 如果 `docs/医院材料学习/` 中存在原生 Markdown 文件，也将其纳入单独集合
+3. 如果 `docs/医院材料学习/` 中存在原生 Markdown 文件，也将其纳入 `source_md` 刷新范围；这包括 `docs/医院材料学习/公众号每日监测/` 下新抓取的文章 Markdown
 4. 继续到第三步
 
 #### 模式二：policy（政策获取）
@@ -112,7 +117,7 @@ qmd collection add "docs/knowledge-base/.manual-rules" --name manual_rules --mas
 ```
 
 说明：
-- `source_md`：源目录里本来就是 Markdown 的文件（例如政策抓取结果）
+- `source_md`：源目录里本来就是 Markdown 的文件（例如政策抓取结果、`公众号每日监测` 抓取结果）
 - `yycailiao_md`：由 PDF/DOCX/PPTX 转换得到的 Markdown
 - `xlsxmd`：由 XLSX 转换得到的 Markdown
 - `manual_rules`：手动新增规则

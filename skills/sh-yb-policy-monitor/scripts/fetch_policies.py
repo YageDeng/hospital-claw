@@ -9,6 +9,7 @@
 """
 
 import argparse
+import os
 import re
 import sys
 from datetime import datetime, timedelta
@@ -18,7 +19,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-SAVE_DIR = Path(r"C:\Users\roger\Documents\sh-yb-policies")
+DEFAULT_SAVE_DIR = Path(r"C:\Users\roger\Documents\sh-yb-policies")
 BASE_URL = "https://ybj.sh.gov.cn"
 
 CHANNELS = [
@@ -146,12 +147,22 @@ def fetch_article_content(url: str) -> str:
     return "（未能提取正文内容，请访问原文链接查看）"
 
 
-def save_article(article: dict, channel: dict, content: str) -> Path | None:
+def resolve_save_dir(explicit_save_dir: str | None = None) -> Path:
+    if explicit_save_dir:
+        return Path(explicit_save_dir).expanduser().resolve()
+    env_override = os.environ.get("SH_YB_POLICY_SAVE_DIR", "").strip()
+    if env_override:
+        return Path(env_override).expanduser().resolve()
+    return DEFAULT_SAVE_DIR
+
+
+def save_article(article: dict, channel: dict, content: str, save_dir: Path | None = None) -> Path | None:
     """Save article as markdown. Returns filepath if saved, None if duplicate."""
-    SAVE_DIR.mkdir(parents=True, exist_ok=True)
+    target_dir = save_dir or DEFAULT_SAVE_DIR
+    target_dir.mkdir(parents=True, exist_ok=True)
 
     filename = f"{article['date']}_{channel['id']}_{sanitize_filename(article['title'])}.md"
-    filepath = SAVE_DIR / filename
+    filepath = target_dir / filename
 
     if filepath.exists():
         return None
@@ -173,7 +184,9 @@ def main():
     parser = argparse.ArgumentParser(description="上海医保局政策监控")
     parser.add_argument("--date", help="检查指定日期 (YYYY-MM-DD)")
     parser.add_argument("--days", type=int, default=1, help="检查最近N天 (默认1=昨天)")
+    parser.add_argument("--save-dir", help="输出目录，默认使用脚本内置路径或 SH_YB_POLICY_SAVE_DIR")
     args = parser.parse_args()
+    save_dir = resolve_save_dir(args.save_dir)
 
     if args.date:
         target_dates = {args.date}
@@ -186,10 +199,11 @@ def main():
 
     target_dates_str = ", ".join(sorted(target_dates))
     print(f"检查日期：{target_dates_str}")
-    print(f"保存路径：{SAVE_DIR}")
+    print(f"保存路径：{save_dir}")
     print("=" * 60)
 
     all_results = []
+    failed_channels = 0
 
     for channel in CHANNELS:
         print(f"\n正在检查【{channel['name']}】({channel['url']})")
@@ -208,7 +222,7 @@ def main():
                 print(f"  ● {article['title']} ({article['date']})")
 
                 content = fetch_article_content(article["url"])
-                saved_path = save_article(article, channel, content)
+                saved_path = save_article(article, channel, content, save_dir=save_dir)
 
                 result = {
                     "channel": channel["name"],
@@ -227,6 +241,7 @@ def main():
                     print(f"    → 已存在，跳过")
 
         except Exception as e:
+            failed_channels += 1
             print(f"  ✗ 获取失败：{e}", file=sys.stderr)
 
     print("\n" + "=" * 60)
@@ -243,8 +258,12 @@ def main():
     else:
         print(f"\n{target_dates_str} 三个栏目均无新发布内容。")
 
-    return len(all_results)
+    if failed_channels:
+        print(f"\n本次有 {failed_channels} 个栏目获取失败。", file=sys.stderr)
+        return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(0 if main() >= 0 else 1)
+    sys.exit(main())

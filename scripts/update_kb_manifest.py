@@ -15,10 +15,11 @@ from pathlib import Path
 
 
 DEFAULT_SCAN_DIRS = [
-    r"docs\knowledge-base\.staging",
-    r"docs\knowledge-base\.staging-binary-md",
-    r"docs\knowledge-base\.manual-rules",
-    r"docs\knowledge-base\.wiki-ingest-src",
+    "docs/knowledge-base/.staging",
+    "docs/knowledge-base/.staging-binary-md",
+    "docs/knowledge-base/.manual-rules",
+    "docs/knowledge-base/.wiki-ingest-src",
+    "docs/医院材料学习",
 ]
 
 
@@ -36,10 +37,14 @@ def rel_path(path: Path, root: Path) -> str:
 
 def build_entries(root: Path, scan_dirs: list[Path]) -> list[dict[str, object]]:
     entries: list[dict[str, object]] = []
+    source_docs_root = (root / "docs" / "医院材料学习").resolve()
     for scan_dir in scan_dirs:
         if not scan_dir.exists():
             continue
         for file_path in sorted(p for p in scan_dir.rglob("*") if p.is_file()):
+            if source_docs_root in file_path.resolve().parents or file_path.resolve() == source_docs_root:
+                if file_path.suffix.lower() != ".md":
+                    continue
             stat = file_path.stat()
             entries.append(
                 {
@@ -64,7 +69,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output",
-        default=r"docs\knowledge-base\.manifest.json",
+        default="docs/knowledge-base/.manifest.json",
         help="Manifest output path",
     )
     parser.add_argument(

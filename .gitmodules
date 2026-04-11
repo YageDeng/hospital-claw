@@ -1,0 +1,9 @@
+[submodule "sub-repo/ChatGPT-on-WeChat"]
+	path = sub-repo/ChatGPT-on-WeChat
+	url = https://github.com/kx-Huang/ChatGPT-on-WeChat.git
+[submodule "sub-repo/hermes-agent"]
+	path = sub-repo/hermes-agent
+	url = https://github.com/NousResearch/hermes-agent.git
+[submodule "sub-repo/wechat-article-to-markdown"]
+	path = sub-repo/wechat-article-to-markdown
+	url = https://github.com/jackwener/wechat-article-to-markdown.git

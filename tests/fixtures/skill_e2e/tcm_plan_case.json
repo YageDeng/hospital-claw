@@ -1,0 +1,17 @@
+{
+  "gender": "男",
+  "age": 45,
+  "weight_kg": 72,
+  "chief_complaint": "颈肩痛反复 6 个月，加班后加重，伴头痛和上背部僵硬。",
+  "optional_context": {
+    "history": "久坐办公，偶有失眠。",
+    "tongue": "舌暗，苔薄白。",
+    "pulse": "脉弦涩。"
+  },
+  "expected_keywords": [
+    "第一阶段",
+    "第二阶段",
+    "中医诊断",
+    "数据来源"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "mode": "local",
+  "target_os": "windows",
+  "repo_url": "C:/Users/roger/Documents/Pyproject/Personal-git/hospital-claw",
+  "repo_branch": "main",
+  "clone_dir": "C:/Users/roger/.workbuddy/hospital-claw",
+  "agent_skill_dir": "C:/Users/roger/.workbuddy/skills",
+  "template_output_dir": "C:/Users/roger/.workbuddy/generated",
+  "dry_run": false,
+  "qmd": {
+    "enabled": true,
+    "start": true,
+    "install_if_missing": true,
+    "install_machine_tools": true,
+    "restart": false,
+    "host": "localhost",
+    "port": 8181
+  },
+  "optional_components": {
+    "wechat_router": true,
+    "wechat_decrypt": true
+  },
+  "wechat_decrypt": {
+    "enabled": true,
+    "generate_mcp_template": true,
+    "launch_web_ui": false,
+    "web_host": "localhost",
+    "web_port": 5678
+  },
+  "ssh": {
+    "host": "",
+    "user": "",
+    "port": 22,
+    "identity_file": ""
+  }
+}

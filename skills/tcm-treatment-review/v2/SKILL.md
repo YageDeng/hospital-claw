@@ -75,7 +75,7 @@ description: Review TCM (Traditional Chinese Medicine) treatment forms for medic
 收到用户图片后，统计图片数量并初始化数据库：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python scripts/review_db.py init --image-count <图片数量>
 ```
@@ -197,7 +197,7 @@ JSON 文件格式（保存为 tmp_review_<image_index>_<form_index>.json）：
 保存到数据库的命令：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python scripts/review_db.py save --session <SESSION_ID> --json-file tmp_review_<image_index>_<form_index>.json
 ```
@@ -217,7 +217,7 @@ python scripts/review_db.py save --session <SESSION_ID> --json-file tmp_review_<
 分派所有子代理后，通过轮询数据库状态确认进度：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python scripts/review_db.py status --session <SESSION_ID>
 ```
@@ -229,7 +229,7 @@ python scripts/review_db.py status --session <SESSION_ID>
 所有图片处理完成后，生成汇总报告：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python scripts/review_db.py summary --session <SESSION_ID>
 ```
@@ -428,7 +428,7 @@ Remove-Item tmp_review_*.json -ErrorAction SilentlyContinue
 - 审查结果数据库位于 `data/reviews.db`，可通过以下命令导出历史记录：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python scripts/review_db.py export --session <SESSION_ID>
 ```

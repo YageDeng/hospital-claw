@@ -77,6 +77,18 @@ class TestFetchPolicies(unittest.TestCase):
         self.assertTrue(str(explicit).endswith("explicit-dir"))
         self.assertTrue(str(from_env).endswith("env-dir"))
 
+    def test_resolve_save_dir_uses_runtime_relative_default_when_no_override(self):
+        with tempfile.TemporaryDirectory() as tmpdir, patch.dict(os.environ, {}, clear=True):
+            fake_root = Path(tmpdir) / "agent-home"
+            fake_script = fake_root / "skills" / "sh-yb-policy-monitor" / "scripts" / "fetch_policies.py"
+            fake_script.parent.mkdir(parents=True, exist_ok=True)
+            fake_script.write_text("# test\n", encoding="utf-8")
+
+            with patch("fetch_policies.__file__", str(fake_script)):
+                resolved = resolve_save_dir(None)
+
+        self.assertEqual(resolved, (fake_root / "data" / "sh-yb-policies").resolve())
+
     def test_save_article_honors_explicit_save_dir(self):
         article = {
             "title": "关于开展飞行检查的通知",

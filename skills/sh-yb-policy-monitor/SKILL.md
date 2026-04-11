@@ -18,7 +18,8 @@ description: 监控上海市医疗保障局官网（ybj.sh.gov.cn），获取最
 
 ## 文件存储
 
-- **主存储路径**：`C:\Users\roger\Documents\sh-yb-policies\`
+- **主存储路径**：优先使用 `--save-dir` 或环境变量 `SH_YB_POLICY_SAVE_DIR`
+- **默认回退路径**：部署根目录下的 `data/sh-yb-policies/`
 - **知识库副本**：获取后自动复制到 `docs/医院材料学习/` 以便知识库索引
 - **文件命名**：`{YYYY-MM-DD}_{栏目代号}_{标题简称}.md`
 - 标题简称：取标题前 20 个字符，特殊字符替换为下划线
@@ -31,7 +32,7 @@ description: 监控上海市医疗保障局官网（ybj.sh.gov.cn），获取最
 使用本技能附带的 Python 脚本自动完成全部流程：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python skills/sh-yb-policy-monitor/scripts/fetch_policies.py
 ```
@@ -61,10 +62,11 @@ python skills/sh-yb-policy-monitor/scripts/fetch_policies.py
 
 脚本运行完毕后，**不要使用 `qmd index`**。当前仓库应按以下兼容流程更新知识库：
 
-1. **复制到知识库源目录**：将新获取的文件从 `C:\Users\roger\Documents\sh-yb-policies\` 复制到 `docs/医院材料学习/`
+1. **复制到知识库源目录**：将新获取的文件从 `SH_YB_POLICY_SAVE_DIR` 指定目录，或默认 `data/sh-yb-policies/`，复制到 `docs/医院材料学习/`
 
 ```powershell
-$newFiles = Get-ChildItem "C:\Users\roger\Documents\sh-yb-policies\*.md" | Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-7) }
+$policyDir = if ($env:SH_YB_POLICY_SAVE_DIR) { $env:SH_YB_POLICY_SAVE_DIR } else { Join-Path (Get-Location) "data\sh-yb-policies" }
+$newFiles = Get-ChildItem (Join-Path $policyDir "*.md") | Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-7) }
 foreach ($f in $newFiles) {
     Copy-Item $f.FullName "docs\医院材料学习\" -ErrorAction SilentlyContinue
 }
@@ -73,7 +75,7 @@ foreach ($f in $newFiles) {
 2. **刷新 Markdown 检索集合**：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 qmd collection remove source_md 2>$null
 qmd collection add "docs/医院材料学习" --name source_md --mask "**/*.md"
@@ -128,7 +130,7 @@ python scripts/update_kb_manifest.py
 [同上格式]
 
 ---
-本次共获取 {N} 篇新文件，已保存至 C:\Users\roger\Documents\sh-yb-policies\
+本次共获取 {N} 篇新文件，已保存至 {策略文件目录（SH_YB_POLICY_SAVE_DIR 或 data/sh-yb-policies/）}
 
 ### 知识库更新状态
 - ✅ 已将 {N} 个新文件纳入知识库检索层

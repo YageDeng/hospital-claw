@@ -19,7 +19,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-DEFAULT_SAVE_DIR = Path(r"C:\Users\roger\Documents\sh-yb-policies")
+DEFAULT_SAVE_SUBDIR = Path("data") / "sh-yb-policies"
 BASE_URL = "https://ybj.sh.gov.cn"
 
 CHANNELS = [
@@ -147,18 +147,26 @@ def fetch_article_content(url: str) -> str:
     return "（未能提取正文内容，请访问原文链接查看）"
 
 
+def default_save_dir_from_script(script_path: str | Path | None = None) -> Path:
+    resolved_script = Path(script_path or __file__).resolve()
+    skills_ancestors = [parent for parent in resolved_script.parents if parent.name == "skills"]
+    if skills_ancestors:
+        return (skills_ancestors[-1].parent / DEFAULT_SAVE_SUBDIR).resolve()
+    return (resolved_script.parent / DEFAULT_SAVE_SUBDIR).resolve()
+
+
 def resolve_save_dir(explicit_save_dir: str | None = None) -> Path:
     if explicit_save_dir:
         return Path(explicit_save_dir).expanduser().resolve()
     env_override = os.environ.get("SH_YB_POLICY_SAVE_DIR", "").strip()
     if env_override:
         return Path(env_override).expanduser().resolve()
-    return DEFAULT_SAVE_DIR
+    return default_save_dir_from_script()
 
 
 def save_article(article: dict, channel: dict, content: str, save_dir: Path | None = None) -> Path | None:
     """Save article as markdown. Returns filepath if saved, None if duplicate."""
-    target_dir = save_dir or DEFAULT_SAVE_DIR
+    target_dir = save_dir or default_save_dir_from_script()
     target_dir.mkdir(parents=True, exist_ok=True)
 
     filename = f"{article['date']}_{channel['id']}_{sanitize_filename(article['title'])}.md"

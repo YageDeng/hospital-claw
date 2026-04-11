@@ -1,0 +1,36 @@
+{
+  "mode": "local",
+  "target_os": "linux",
+  "repo_url": "https://example.com/roger/hospital-claw.git",
+  "repo_branch": "main",
+  "clone_dir": "/opt/hospital-claw",
+  "agent_skill_dir": "/opt/openclaw/skills",
+  "template_output_dir": "/opt/openclaw/generated",
+  "dry_run": true,
+  "qmd": {
+    "enabled": true,
+    "start": true,
+    "install_if_missing": true,
+    "install_machine_tools": false,
+    "restart": false,
+    "host": "localhost",
+    "port": 8181
+  },
+  "optional_components": {
+    "wechat_router": true,
+    "wechat_decrypt": true
+  },
+  "wechat_decrypt": {
+    "enabled": true,
+    "generate_mcp_template": true,
+    "launch_web_ui": false,
+    "web_host": "localhost",
+    "web_port": 5678
+  },
+  "ssh": {
+    "host": "mini.local",
+    "user": "roger",
+    "port": 22,
+    "identity_file": "~/.ssh/id_ed25519"
+  }
+}

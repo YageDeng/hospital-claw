@@ -54,7 +54,7 @@ description: 更新本地知识库。支持三种模式：docs（扫描新文档
 2. 运行转换脚本，生成仓库内可索引的 Markdown 输入：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python scripts/xlsx_to_markdown.py --input "docs/医院材料学习" --output "docs/knowledge-base/.staging"
 python scripts/binary_docs_to_markdown.py --input "docs/医院材料学习" --output "docs/knowledge-base/.staging-binary-md"
@@ -68,12 +68,12 @@ python scripts/binary_docs_to_markdown.py --input "docs/医院材料学习" --ou
 1. 运行 `sh-yb-policy-monitor` 技能的获取脚本：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python skills/sh-yb-policy-monitor/scripts/fetch_policies.py --days 7
 ```
 
-2. 将新获取的政策文件从 `C:\Users\roger\Documents\sh-yb-policies\` 复制到 `docs/医院材料学习/`
+2. 将新获取的政策文件从 `SH_YB_POLICY_SAVE_DIR` 指定目录，或默认 `data/sh-yb-policies/`，复制到 `docs/医院材料学习/`
 3. 再按 docs 模式继续执行转换与集合刷新
 
 #### 模式三：rules（手动规则）
@@ -102,7 +102,7 @@ python skills/sh-yb-policy-monitor/scripts/fetch_policies.py --days 7
 不要使用 `qmd index`。改为刷新以下 Markdown 集合：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 
 qmd collection remove source_md 2>$null
@@ -142,7 +142,7 @@ qmd collection add "docs/knowledge-base/.manual-rules" --name manual_rules --mas
 使用辅助脚本更新 `docs/knowledge-base/.manifest.json`：
 
 ```powershell
-cd c:\Users\roger\Documents\Pyproject\Personal-git\hospital-claw
+cd <repo-root>
 .\.venv\Scripts\Activate.ps1
 python scripts/update_kb_manifest.py
 ```

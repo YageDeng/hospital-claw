@@ -1,6 +1,6 @@
 ---
 name: wechat-router llm reply
-overview: Create a focused implementation plan for `wechat-router` that improves OCR-based chat targeting and replaces the fixed keyword reply with a local persisted LLM task queue plus polling worker.
+overview: Create a focused implementation plan for `wechat-router` that improves OCR-based chat targeting, replaces the fixed keyword reply with a local persisted LLM task queue plus polling worker, and adds a `ChatGPT-on-WeChat` fallback bot track.
 todos:
   - id: improve-chat-lookup
     content: Improve OCR-based chat lookup reliability in the navigator and platform adapter using calibration, candidate ranking, and fallback OCR passes
@@ -17,17 +17,21 @@ todos:
   - id: verify-flow
     content: Add focused tests and manual verification for enqueue, polling, dedupe, and reply-to-correct-chat behavior
     status: pending
+  - id: chatgpt-on-wechat-fallback
+    content: Add a fallback track in `sub-repo/ChatGPT-on-WeChat` for non-OpenAI model endpoints and local automated bot deployment validation
+    status: pending
 isProject: false
 ---
 
 # WeChat Router OCR And LLM Queue Plan
 
-**Goal:** Improve reply-target chat matching in `wechat-router` and route matched keyword messages into a local persisted LLM task queue that polls an external LLM service and replies back to the original WeChat chat when the result is ready.
+**Goal:** Improve reply-target chat matching in `wechat-router`, route matched keyword messages into a local persisted LLM task queue that polls an external LLM service and replies back to the original WeChat chat when the result is ready, and add a parallel fallback path based on `sub-repo/ChatGPT-on-WeChat`.
 
 ## Current Reuse Points
 - Keep the existing SSE trigger entrypoint in [`wechat-router/src/trigger.py`](wechat-router/src/trigger.py); it already listens to message events and dispatches `reply_callback` handlers.
 - Reuse the current reply send path from [`wechat-router/src/reply_plugins/echo.py`](wechat-router/src/reply_plugins/echo.py) and [`wechat-router/src/navigator.py`](wechat-router/src/navigator.py) instead of inventing a second UI automation path.
 - Preserve rule configuration in [`wechat-router/config.yaml`](wechat-router/config.yaml), but change matched-rule behavior from fixed text reply to queue submission.
+- Treat [`sub-repo/ChatGPT-on-WeChat/src/main.ts`](sub-repo/ChatGPT-on-WeChat/src/main.ts) and [`sub-repo/ChatGPT-on-WeChat/src/chatgpt.ts`](sub-repo/ChatGPT-on-WeChat/src/chatgpt.ts) as a separate fallback bot path rather than mixing its runtime directly into `wechat-router`.
 
 ## File Map
 - Modify [`wechat-router/src/navigator.py`](wechat-router/src/navigator.py): improve chat lookup reliability by scoring all OCR candidates, retrying deterministically, and adding a fallback OCR pass before declaring failure.
@@ -38,6 +42,9 @@ isProject: false
 - Add [`wechat-router/src/task_store.py`](wechat-router/src/task_store.py) or extend [`wechat-router/src/storage.py`](wechat-router/src/storage.py): store task state, external task id, attempts, timestamps, original chat metadata, final response, and last error.
 - Add [`wechat-router/src/llm_worker.py`](wechat-router/src/llm_worker.py): submit pending tasks to the external LLM service, poll for completion, and hand completed outputs to the existing reply sender.
 - Add or update focused tests under [`wechat-router/tests`](wechat-router/tests) for queue state transitions, trigger enqueue behavior, and chat lookup ranking/fallback logic.
+- Modify [`sub-repo/ChatGPT-on-WeChat/src/interface.ts`](sub-repo/ChatGPT-on-WeChat/src/interface.ts) and [`sub-repo/ChatGPT-on-WeChat/src/config.ts`](sub-repo/ChatGPT-on-WeChat/src/config.ts): extend configuration beyond OpenAI-only keys so model endpoint, base URL, and provider-specific settings can be supplied.
+- Modify [`sub-repo/ChatGPT-on-WeChat/src/chatgpt.ts`](sub-repo/ChatGPT-on-WeChat/src/chatgpt.ts): isolate the model client setup so OpenAI-compatible or alternate provider endpoints can be used without source edits for every deployment.
+- Modify [`sub-repo/ChatGPT-on-WeChat/config.yaml.example`](sub-repo/ChatGPT-on-WeChat/config.yaml.example), [`sub-repo/ChatGPT-on-WeChat/.env.example`](sub-repo/ChatGPT-on-WeChat/.env.example), and [`sub-repo/ChatGPT-on-WeChat/README.md`](sub-repo/ChatGPT-on-WeChat/README.md): document the new endpoint settings and the local fallback-bot startup/validation flow.
 
 ## Workstreams
 ### 1. Stabilize OCR-Based Chat Targeting
@@ -65,9 +72,18 @@ isProject: false
 - Verify the integrated flow manually with a sample keyword match: SSE event received, task written, worker completion observed, and reply sent to the correct chat.
 - Keep the first rollout behind explicit config values so the existing echo-style behavior can still be used for debugging if needed.
 
+### 5. Add `ChatGPT-on-WeChat` Fallback Bot Track
+- Extend [`sub-repo/ChatGPT-on-WeChat/src/interface.ts`](sub-repo/ChatGPT-on-WeChat/src/interface.ts) and [`sub-repo/ChatGPT-on-WeChat/src/config.ts`](sub-repo/ChatGPT-on-WeChat/src/config.ts) so the bot can read provider-neutral settings such as API base URL, model name, and any alternate endpoint metadata instead of assuming only `openaiApiKey` and `openaiOrganizationID`.
+- Refactor [`sub-repo/ChatGPT-on-WeChat/src/chatgpt.ts`](sub-repo/ChatGPT-on-WeChat/src/chatgpt.ts) so the request path supports at least OpenAI-compatible alternative endpoints first, while leaving a clean seam for truly non-compatible providers if they are needed later.
+- Update [`sub-repo/ChatGPT-on-WeChat/config.yaml.example`](sub-repo/ChatGPT-on-WeChat/config.yaml.example), [`sub-repo/ChatGPT-on-WeChat/.env.example`](sub-repo/ChatGPT-on-WeChat/.env.example), and [`sub-repo/ChatGPT-on-WeChat/README.md`](sub-repo/ChatGPT-on-WeChat/README.md) with the new provider/base URL settings and a clear local startup path using `npm run dev` and Docker/Compose options.
+- Validate whether the fallback bot can be deployed and logged into locally in this environment, and record either a successful automated-bot startup path or the concrete blocker if QR-login, account restrictions, or dependency/runtime issues prevent completion.
+- Keep this fallback track parallel to the OCR and GUI auto-send path so it can be used if UI automation remains unreliable in production.
+
 ## Acceptance Criteria
 - A keyword match no longer sends a hardcoded inline reply; it creates a durable local task instead.
 - A local worker can submit and poll LLM tasks without blocking the SSE trigger loop.
 - Completed LLM output is sent back to the original WeChat chat through the existing send path.
 - OCR-based chat targeting is measurably more reliable because calibration, candidate ranking, and retry/fallback logic are in place.
 - Duplicate messages do not lead to duplicate LLM jobs or duplicate replies after reconnects/restarts.
+- `sub-repo/ChatGPT-on-WeChat` can be configured for at least one non-default model endpoint without editing source code for each deployment.
+- The fallback bot path has a documented local validation result: either a successful local deployment/login flow or explicit blockers recorded from the environment check.

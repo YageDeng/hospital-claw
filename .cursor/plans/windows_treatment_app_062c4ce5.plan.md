@@ -4,10 +4,10 @@ overview: Design and implementation plan for a Python-packaged Windows desktop a
 todos:
   - id: define-schemas
     content: Define the canonical treatment-plan JSON contract and the target-app profile schema, including review layout and fill locators.
-    status: in_progress
+    status: completed
   - id: extract-shared-automation
     content: Refactor reusable OCR/window automation pieces from `wechat-router` into shared modules the desktop app can consume.
-    status: pending
+    status: in_progress
   - id: build-shell-ui
     content: Build the PySide6 hover widget and expandable review surface that renders fields in a source-app-like layout.
     status: pending

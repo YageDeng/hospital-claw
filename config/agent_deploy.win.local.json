@@ -1,11 +1,9 @@
 {
   "mode": "local",
   "target_os": "windows",
-  "repo_url": "C:/Users/roger/Documents/Pyproject/Personal-git/hospital-claw",
+  "repo_url": "..",
   "repo_branch": "main",
-  "clone_dir": "C:/Users/roger/.workbuddy/hospital-claw",
-  "agent_skill_dir": "C:/Users/roger/.workbuddy/skills",
-  "template_output_dir": "C:/Users/roger/.workbuddy/generated",
+  "deploy_root_dir": "~/.workbuddy",
   "dry_run": false,
   "qmd": {
     "enabled": true,

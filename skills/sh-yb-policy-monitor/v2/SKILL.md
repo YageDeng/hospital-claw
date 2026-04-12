@@ -1,7 +1,7 @@
 ---
 name: sh-yb-policy-monitor
 version: v2
-description: 监控上海市医疗保障局官网（ybj.sh.gov.cn），获取最新医保政策、动态和公告。下载保存至本地并自动更新知识库。当用户询问上海医保最新政策、最新公告、医保动态，或需要检查医保局网站是否有新文件发布时使用。
+description: 当用户要求检查上海医保局最新动态、最新政策、公示公告，或抓取政策后同步共享知识库时使用。
 ---
 
 # 上海医保局政策监控（v2 — 知识库联动）
@@ -19,9 +19,29 @@ description: 监控上海市医疗保障局官网（ybj.sh.gov.cn），获取最
 ## 文件存储
 
 - **主存储路径**：优先使用 `--save-dir` 或环境变量 `SH_YB_POLICY_SAVE_DIR`
-- **默认回退路径**：部署根目录下的 `data/sh-yb-policies/`
-- **知识库副本**：获取后自动复制到 `docs/医院材料学习/` 以便知识库索引
+- **默认回退路径**：部署根目录下的 `<KB_POLICY_ROOT>/`
+- **知识库副本**：获取后自动复制到 `<KB_SOURCE_ROOT>/` 以便知识库索引
 - **文件命名**：`{YYYY-MM-DD}_{栏目代号}_{标题简称}.md`
+
+## 共享知识库路径
+
+优先读取 `_shared_runtime/knowledge-base-paths.json`：
+
+- `<KB_ROOT>` = `knowledgeBase.rootDir`
+- `<KB_SOURCE_ROOT>` = `knowledgeBase.sourceDocsDir`
+- `<KB_POLICY_ROOT>` = `knowledgeBase.policySaveDir`
+
+共享文件缺失时回退到：
+
+- `<KB_ROOT>` = `docs/knowledge-base`
+- `<KB_SOURCE_ROOT>` = `docs/医院材料学习`
+- `<KB_POLICY_ROOT>` = `data/sh-yb-policies`
+
+## 跨技能协作约定
+
+- 本技能只负责抓取与保存政策原文，不负责共享知识库的完整重建。
+- 用户要求“同步到知识库 / 更新 manifest / 重建 wiki / 全量刷新”时，优先交给 `knowledge-base-update`。
+- `tcm-treatment-plan` 或 `tcm-treatment-review` 如需最新政策，先执行本技能抓取，再交由 `knowledge-base-update` 刷新后再消费。
 
 ## 执行流程
 
@@ -48,40 +68,32 @@ python skills/sh-yb-policy-monitor/scripts/fetch_policies.py
 5. **保存文件**：用 Write 工具保存到指定路径（格式见下方"文件格式"）
 6. **生成摘要**：汇总所有新文章，按"输出格式"呈现
 
-## 获取后：知识库更新（v2 新增）
+## 获取后：与共享知识库协作
 
-脚本运行完毕后，**不要使用 `qmd index`**。当前仓库应按以下兼容流程更新知识库：
+默认流程分两层：
 
-1. **复制到知识库源目录**：将新获取的文件从 `SH_YB_POLICY_SAVE_DIR` 指定目录，或默认 `data/sh-yb-policies/`，复制到 `docs/医院材料学习/`
+1. **本技能负责抓取与落盘**：把新政策保存到 `SH_YB_POLICY_SAVE_DIR` 或 `<KB_POLICY_ROOT>/`
+2. **`knowledge-base-update` 负责标准入库**：当用户要求同步知识库、刷新 manifest、重建 wiki、或统一处理多来源内容时，直接交给 `knowledge-base-update` 的 `policy` 模式
+
+仅当当前会话必须立刻让新政策 Markdown 可搜索、且不准备切换到 `knowledge-base-update` 时，才执行最小同步：
 
 ```powershell
-$policyDir = if ($env:SH_YB_POLICY_SAVE_DIR) { $env:SH_YB_POLICY_SAVE_DIR } else { Join-Path (Get-Location) "data\sh-yb-policies" }
+$policyDir = if ($env:SH_YB_POLICY_SAVE_DIR) { $env:SH_YB_POLICY_SAVE_DIR } else { "<KB_POLICY_ROOT>" }
 $newFiles = Get-ChildItem (Join-Path $policyDir "*.md") | Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-7) }
 foreach ($f in $newFiles) {
-    Copy-Item $f.FullName "docs\医院材料学习\" -ErrorAction SilentlyContinue
+    Copy-Item $f.FullName "<KB_SOURCE_ROOT>" -ErrorAction SilentlyContinue
 }
-```
 
-2. **刷新 Markdown 检索集合**：
-
-```powershell
-cd <repo-root>
-.\.venv\Scripts\Activate.ps1
 qmd collection remove source_md 2>$null
-qmd collection add "docs/医院材料学习" --name source_md --mask "**/*.md"
-```
-
-3. **如需同步知识库支撑文件**，运行：
-
-```powershell
+qmd collection add "<KB_SOURCE_ROOT>" --name source_md --mask "**/*.md"
 python scripts/update_kb_manifest.py
 ```
 
-4. **如需重建 wiki 页面**，不要假设 `qmd wiki ingest` 会自动全量生效。当前 CLI 需要 collection-relative `qmd wiki ingest` + `qmd wiki write` 流程；推荐直接按 `knowledge-base-update` 技能执行统一更新。
+注意：
 
-5. **在输出中注明**：在摘要末尾添加知识库更新状态
-
-如 MinerU 未安装、MCP 服务未运行，或 `qmd query` 首次运行卡在模型下载，跳过深度更新并在输出中注明："⚠️ 知识库检索层未完全更新，请稍后运行 knowledge-base-update 技能。"
+- 上面的最小同步只覆盖本次新增政策 Markdown
+- 如需 wiki 重建、二进制转换、规则合并或全量一致性修复，仍由 `knowledge-base-update` 负责
+- 如 MinerU 未安装、MCP 服务未运行，或 `qmd query` 首次运行卡在模型下载，跳过最小同步并说明需稍后运行 `knowledge-base-update`
 
 ## 文件格式
 
@@ -120,7 +132,7 @@ python scripts/update_kb_manifest.py
 [同上格式]
 
 ---
-本次共获取 {N} 篇新文件，已保存至 {策略文件目录（SH_YB_POLICY_SAVE_DIR 或 data/sh-yb-policies/）}
+本次共获取 {N} 篇新文件，已保存至 {策略文件目录（SH_YB_POLICY_SAVE_DIR 或 <KB_POLICY_ROOT>/）}
 
 ### 知识库更新状态
 - ✅ 已将 {N} 个新文件纳入知识库检索层

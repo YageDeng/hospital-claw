@@ -1,10 +1,10 @@
 {
   "mode": "local",
-  "target_os": "linux",
-  "repo_url": "https://github.com/your-org/hospital-claw.git",
+  "target_os": "macos",
+  "repo_url": "..",
   "repo_branch": "main",
   "deploy_root_dir": "~/.workbuddy",
-  "dry_run": true,
+  "dry_run": false,
   "qmd": {
     "enabled": true,
     "start": true,

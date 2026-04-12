@@ -1,0 +1,53 @@
+{
+  "skill_name": "shared-kb-cross-skill",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请检查上海医保局最近 7 天有没有和中医收费、医保监管相关的新政策或公告。如果有，先抓取保存，再按标准流程同步到共享知识库。最后告诉我：抓到了什么、知识库是否刷新成功、你用的是共享路径文件还是默认回退路径。",
+      "expected_output": "应先走 `sh-yb-policy-monitor` 抓取，再交给 `knowledge-base-update` 的 `policy` 模式做标准入库，而不是在政策技能里自行做全量知识库维护。最终应汇报抓取结果、知识库刷新状态和路径来源。",
+      "files": [],
+      "expectations": [
+        "响应明确先执行 `sh-yb-policy-monitor` 的抓取，再执行 `knowledge-base-update` 的 `policy` 模式。",
+        "响应没有把共享知识库的完整刷新职责留在 `sh-yb-policy-monitor` 内部单独完成。",
+        "最终结果明确说明知识库刷新是否成功或为何跳过。",
+        "最终结果明确说明路径来源是共享路径文件还是默认回退路径。"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "我刚发来一篇公众号文章，需要你抓取正文、按监测规则分类，并把它纳入共享知识库。文章落盘后，如果还需要刷新 manifest、集合或 wiki，请走标准技能协作，不要重复实现两套知识库逻辑。",
+      "expected_output": "应先走 `wechat-daily-monitor` 抓取与分类，再明确把完整知识库刷新交给 `knowledge-base-update` 的 `docs` 模式；如只做最小刷新，也要说明范围仅限 `source_md`。",
+      "files": [],
+      "expectations": [
+        "响应明确先由 `wechat-daily-monitor` 完成文章抓取与分类。",
+        "响应明确将完整知识库刷新交给 `knowledge-base-update` 的 `docs` 模式。",
+        "如果提到 `--refresh-kb`，响应明确说明它只覆盖最小 `source_md` 刷新。",
+        "响应避免在公众号技能里重复实现 manifest、wiki 或全量集合维护逻辑。"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "请根据这位患者的信息制定治疗方案：女，52岁，66kg，颈肩痛伴腰痛 4 个月，睡眠差，久坐办公。我担心当前共享知识库里的收费政策不是最新的，所以如果你判断需要补抓政策并刷新知识库，就先完成那条链路，再给我正式方案。",
+      "expected_output": "`tcm-treatment-plan` 应保持只读，不直接修改知识库；在需要最新政策时，应先触发 `sh-yb-policy-monitor` 和 `knowledge-base-update`，然后再查询共享知识库生成方案，并在结果里说明数据来源。",
+      "files": [],
+      "expectations": [
+        "响应把 `tcm-treatment-plan` 表述为共享知识库的只读消费者，而不是知识库维护者。",
+        "当知识库可能过期时，响应明确先走 `sh-yb-policy-monitor` 加 `knowledge-base-update` 的刷新链路。",
+        "刷新完成后，响应明确通过共享知识库查询价格和规则，再生成方案。",
+        "最终方案明确说明价格/规则的数据来源。"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "我准备审查一张中医治疗申请单，里面有常规针法、药物罐加收、腰部推拿。请先确认共享知识库是否需要因最近政策变动而刷新；如果需要，按标准协作链先刷新，再用更新后的知识库给我正式审查结论，不要直接手改知识库。",
+      "expected_output": "`tcm-treatment-review` 应保持只读，必要时先走生产者技能加 `knowledge-base-update` 的刷新链，再用共享知识库核价和审查；输出应体现刷新是否发生以及最终审查依据。",
+      "files": [],
+      "expectations": [
+        "响应把 `tcm-treatment-review` 表述为共享知识库的只读消费者，而不是知识库维护者。",
+        "当知识库需要刷新时，响应明确先走生产者技能再走 `knowledge-base-update`。",
+        "刷新后，响应明确使用共享知识库进行价格核验和规则审查。",
+        "最终结果明确说明是否发生刷新以及审查依据。"
+      ]
+    }
+  ]
+}

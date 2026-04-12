@@ -1,7 +1,7 @@
 ---
 name: wechat-daily-monitor
 version: v1
-description: 监测指定公众号文章，抓取为本地 Markdown 与图片资源，按 P0-P4 规则分类，并自动刷新知识库。当用户要检查公众号更新、导入微信公众号文章到知识库、生成公众号预警/日报/周报时使用。
+description: 当用户要求抓取公众号文章、生成公众号预警/日报/周报，或把公众号内容同步到共享知识库时使用。
 ---
 
 # 公众号每日监测（v1 — 知识库自动联动）
@@ -41,12 +41,33 @@ uv pip install --python .\.venv\Scripts\python.exe requests beautifulsoup4
 
 4. 如需自动发现文章链接，当前运行环境应能访问 `wechat-router/wechat-decrypt/` 的 MCP 能力
 
+## 共享知识库路径
+
+优先读取 `_shared_runtime/knowledge-base-paths.json`：
+
+- `<KB_ROOT>` = `knowledgeBase.rootDir`
+- `<KB_SOURCE_ROOT>` = `knowledgeBase.sourceDocsDir`
+- `<KB_POLICY_ROOT>` = `knowledgeBase.policySaveDir`
+
+共享文件缺失时回退到：
+
+- `<KB_ROOT>` = `docs/knowledge-base`
+- `<KB_SOURCE_ROOT>` = `docs/医院材料学习`
+- `<KB_POLICY_ROOT>` = `data/sh-yb-policies`
+
+## 跨技能协作约定
+
+- 本技能负责文章抓取、分类与落盘，不负责共享知识库的完整重建。
+- 文章落盘后的标准刷新入口是 `knowledge-base-update` 的 `docs` 模式。
+- `--refresh-kb` 只做最小 `source_md` 刷新；如需统一修正 manifest、重建 wiki 或合并其他来源，交给 `knowledge-base-update`。
+- `tcm-treatment-plan` 与 `tcm-treatment-review` 应消费刷新后的共享知识库，而不是直接依赖原始抓取目录。
+
 ## 输出目录
 
 所有抓取结果保存到：
 
 ```text
-docs/医院材料学习/公众号每日监测/YYYY-MM-DD/<公众号名>/<NN_文章标题>/
+<KB_SOURCE_ROOT>/公众号每日监测/YYYY-MM-DD/<公众号名>/<NN_文章标题>/
 ```
 
 每篇文章目录至少包含：
@@ -175,7 +196,7 @@ IF 标题含 ("中医馆" OR "门诊")
 优先使用以下命令：
 
 ```powershell
-python scripts/wechat_article_pipeline.py "<url1>" "<url2>" --output-dir "docs/医院材料学习/公众号每日监测" --save-html --refresh-kb
+python scripts/wechat_article_pipeline.py "<url1>" "<url2>" --output-dir "<KB_SOURCE_ROOT>/公众号每日监测" --save-html --refresh-kb
 ```
 
 说明：
@@ -186,7 +207,7 @@ python scripts/wechat_article_pipeline.py "<url1>" "<url2>" --output-dir "docs/�
 
 ### 第四步：读取监测报告
 
-脚本执行后，读取 `docs/医院材料学习/公众号每日监测/_reports/` 下最新的 JSON 报告，提取：
+脚本执行后，读取 `<KB_SOURCE_ROOT>/公众号每日监测/_reports/` 下最新的 JSON 报告，提取：
 
 - `urgent_alerts`
 - `daily_summary`
@@ -207,19 +228,19 @@ python scripts/wechat_article_pipeline.py "<url1>" "<url2>" --output-dir "docs/�
 
 ## 知识库联动
 
-本技能默认把新文章视为 `docs` 模式下的原生 Markdown 输入。
+本技能默认把新文章视为 `docs` 模式下、位于 `<KB_SOURCE_ROOT>/` 的原生 Markdown 输入。
 
-如使用 `--refresh-kb`，脚本会自动执行最小刷新流程。其等价命令为：
+如使用 `--refresh-kb`，脚本会自动执行最小刷新流程。完整一致性刷新仍交给 `knowledge-base-update`。其等价命令为：
 
 ```powershell
 python scripts/update_kb_manifest.py
 qmd collection remove source_md 2>$null
-qmd collection add "docs/医院材料学习" --name source_md --mask "**/*.md"
+qmd collection add "<KB_SOURCE_ROOT>" --name source_md --mask "**/*.md"
 ```
 
 注意：
 
-- `docs/医院材料学习/公众号每日监测/` 下新增的 Markdown 属于 `source_md` 刷新范围
+- `<KB_SOURCE_ROOT>/公众号每日监测/` 下新增的 Markdown 属于 `source_md` 刷新范围
 - 如果本次还需要 PDF/DOCX/PPTX 转换或 Wiki 刷新，不要在本技能里重复实现，改为复用 `knowledge-base-update` 技能
 
 ## 输出要求

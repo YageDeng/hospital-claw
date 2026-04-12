@@ -1,7 +1,7 @@
 ---
 name: tcm-treatment-review
 version: v2
-description: Review TCM (Traditional Chinese Medicine) treatment forms for medical insurance compliance. Check diagnosis-treatment consistency, pricing accuracy, needle method stacking rules, surcharge item pairing, treatment log completeness, and body part specification. Use when the user asks to review, audit, or judge TCM treatment forms (治疗单/治疗申请单) for qualification.
+description: 当用户要求审查、审核或判定中医治疗单/治疗申请单的医保合规性，且需要结合共享知识库核对最新价格与规则时使用。
 ---
 
 # 中医治疗单合规审查（v2 — 知识库驱动 + 并发流水线）
@@ -13,8 +13,31 @@ description: Review TCM (Traditional Chinese Medicine) treatment forms for medic
 ## 前置条件
 
 - **优先**：MinerU MCP 服务已启动（`qmd mcp --http --daemon`），可使用 `query`、`search`、`wiki_read` 等工具查询知识库
-- **备选**：如 MCP 不可用，通过 Read 工具直接读取知识库 Markdown 源文件：`docs/knowledge-base/.staging/`（XLSX 转换）和 `docs/knowledge-base/.staging-binary-md/`（PDF/DOCX/PPTX 转换），以及 `docs/knowledge-base/.wiki-ingest-src/`（wiki 源文件）
+- **备选**：如 MCP 不可用，通过 Read 工具直接读取知识库 Markdown 源文件：`<KB_ROOT>/.staging/`（XLSX 转换）和 `<KB_ROOT>/.staging-binary-md/`（PDF/DOCX/PPTX 转换），以及 `<KB_ROOT>/.wiki-ingest-src/`（wiki 源文件）
 - **后备**：知识库文件均不可用时，使用本技能末尾的静态价格参考，并在输出中注明："⚠️ 价格来源：静态后备参考（知识库不可达），可能非最新。"
+
+## 共享知识库路径
+
+优先读取 `_shared_runtime/knowledge-base-paths.json`：
+
+- `<KB_ROOT>` = `knowledgeBase.rootDir`
+- `<KB_SOURCE_ROOT>` = `knowledgeBase.sourceDocsDir`
+- `<KB_POLICY_ROOT>` = `knowledgeBase.policySaveDir`
+
+共享文件缺失时回退到：
+
+- `<KB_ROOT>` = `docs/knowledge-base`
+- `<KB_SOURCE_ROOT>` = `docs/医院材料学习`
+- `<KB_POLICY_ROOT>` = `data/sh-yb-policies`
+
+下文凡出现 `docs/knowledge-base/...` 路径，在部署环境中一律按 `<KB_ROOT>/...` 解释。
+
+## 跨技能协作约定
+
+- 本技能只读共享知识库，不直接修改集合、manifest、wiki 或源文件。
+- 如果用户要求按最新政策复核且当前知识库可能过期，先由 `sh-yb-policy-monitor` 抓取、再由 `knowledge-base-update` 刷新。
+- 如果审查对象依赖新公众号内容或新文档，先确认 `wechat-daily-monitor` / `knowledge-base-update` 已完成入库，再开始价格核验。
+- 本技能负责审查逻辑与结果持久化，不负责知识库维护。
 
 ## 审查模式
 

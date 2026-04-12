@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tempfile
@@ -12,22 +13,28 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 from deploy_agent_skills import (  # type: ignore[import-not-found]
+    build_knowledge_base_paths,
     MachineBootstrapPlan,
     build_machine_bootstrap_plan,
     build_default_inventory,
     build_dependency_plan,
     DeploymentInventory,
+    ensure_knowledge_base_layout,
     execute_local_deploy,
     load_target_config,
     plan_repo_checkout_steps,
     render_agent_runtime_template,
     render_template_files,
+    sync_deployment_bundle,
 )
 
 
 class TestDeployAgentSkills(unittest.TestCase):
     def fixture_path(self, name: str) -> Path:
         return Path(__file__).resolve().parent / "fixtures" / "deploy" / name
+
+    def config_path(self, name: str) -> Path:
+        return Path(__file__).resolve().parent.parent / "config" / name
 
     def test_load_target_config_reads_fixture_schema(self):
         config = load_target_config(self.fixture_path("target_config.json"))
@@ -41,6 +48,69 @@ class TestDeployAgentSkills(unittest.TestCase):
         self.assertTrue(config.optional_components.wechat_decrypt)
         self.assertTrue(config.wechat_decrypt.enabled)
         self.assertEqual(config.ssh.host, "mini.local")
+
+    def test_load_target_config_derives_paths_from_deploy_root_dir_and_resolves_relative_repo_url(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_root = Path(tmpdir)
+            config_dir = temp_root / "config"
+            config_dir.mkdir(parents=True, exist_ok=True)
+            deploy_root_dir = temp_root / "runtime-home"
+            config_path = config_dir / "agent_deploy.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "mode": "local",
+                        "target_os": "windows",
+                        "repo_url": "..",
+                        "repo_branch": "main",
+                        "deploy_root_dir": str(deploy_root_dir),
+                        "dry_run": True,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            config = load_target_config(config_path)
+
+        self.assertEqual(Path(config.repo_url).resolve(), temp_root.resolve())
+        self.assertEqual(config.clone_dir, deploy_root_dir / "hospital-claw")
+        self.assertEqual(config.agent_skill_dir, deploy_root_dir / "skills")
+        self.assertEqual(config.template_output_dir, deploy_root_dir / "generated")
+
+    def test_local_sample_configs_use_portable_deploy_root_dir_schema(self):
+        expected_targets = {
+            "agent_deploy.win.local.json": "windows",
+            "agent_deploy.linux.local.json": "linux",
+            "agent_deploy.macos.local.json": "macos",
+        }
+
+        for filename, target_os in expected_targets.items():
+            with self.subTest(filename=filename):
+                config = load_target_config(self.config_path(filename))
+
+                self.assertEqual(config.target_os, target_os)
+                self.assertEqual(config.repo_url, Path(__file__).resolve().parent.parent.as_posix())
+                self.assertEqual(config.clone_dir.as_posix(), Path("~/.workbuddy/hospital-claw").expanduser().as_posix())
+                self.assertEqual(config.agent_skill_dir.as_posix(), Path("~/.workbuddy/skills").expanduser().as_posix())
+                self.assertEqual(
+                    config.template_output_dir.as_posix(),
+                    Path("~/.workbuddy/generated").expanduser().as_posix(),
+                )
+
+    def test_example_config_uses_portable_workbuddy_paths(self):
+        config = load_target_config(self.config_path("agent_deploy.example.json"))
+
+        self.assertEqual(config.target_os, "linux")
+        self.assertEqual(config.repo_url, "https://github.com/your-org/hospital-claw.git")
+        self.assertEqual(config.clone_dir.as_posix(), Path("~/.workbuddy/hospital-claw").expanduser().as_posix())
+        self.assertEqual(config.agent_skill_dir.as_posix(), Path("~/.workbuddy/skills").expanduser().as_posix())
+        self.assertEqual(
+            config.template_output_dir.as_posix(),
+            Path("~/.workbuddy/generated").expanduser().as_posix(),
+        )
 
     def test_build_default_inventory_includes_root_skills_and_shared_scripts(self):
         repo_root = Path(__file__).resolve().parent.parent
@@ -150,6 +220,22 @@ class TestDeployAgentSkills(unittest.TestCase):
         self.assertEqual(template["mcpServers"]["wechat"]["type"], "stdio")
         self.assertIn("mcp_server.py", template["mcpServers"]["wechat"]["args"][0])
         self.assertIn("_shared_runtime", template["sharedRuntimeDir"])
+        self.assertEqual(
+            template["knowledgeBase"]["rootDir"],
+            "/opt/hospital-claw/docs/knowledge-base",
+        )
+        self.assertEqual(
+            template["knowledgeBase"]["sourceDocsDir"],
+            "/opt/hospital-claw/docs/医院材料学习",
+        )
+        self.assertEqual(
+            template["knowledgeBase"]["policySaveDir"],
+            "/opt/hospital-claw/data/sh-yb-policies",
+        )
+        self.assertEqual(
+            template["knowledgeBase"]["sharedInfoFile"],
+            "/opt/openclaw/skills/_shared_runtime/knowledge-base-paths.json",
+        )
 
     def test_render_template_files_returns_runtime_json_and_service_script(self):
         config = load_target_config(self.fixture_path("target_config.json"))
@@ -186,6 +272,95 @@ class TestDeployAgentSkills(unittest.TestCase):
         self.assertIn("<key>Label</key>", templates["qmd-mcp.launchd.plist"])
         self.assertIn("com.hospitalclaw.qmd.mcp", templates["qmd-mcp.launchd.plist"])
         self.assertIn('cd "/opt/hospital-claw" && qmd mcp --http --daemon', templates["qmd-mcp.launchd.plist"])
+
+    def test_build_knowledge_base_paths_covers_windows_macos_and_linux(self):
+        config = load_target_config(self.fixture_path("target_config.json"))
+        clone_dirs = {
+            "windows": Path("C:/Users/roger/.workbuddy/hospital-claw"),
+            "macos": Path("/Users/roger/.workbuddy/hospital-claw"),
+            "linux": Path("/opt/hospital-claw"),
+        }
+        skill_dirs = {
+            "windows": Path("C:/Users/roger/.workbuddy/skills"),
+            "macos": Path("/Users/roger/.workbuddy/skills"),
+            "linux": Path("/opt/openclaw/skills"),
+        }
+
+        for target_os, clone_dir in clone_dirs.items():
+            with self.subTest(target_os=target_os):
+                config.target_os = target_os
+                config.clone_dir = clone_dir
+                config.agent_skill_dir = skill_dirs[target_os]
+                paths = build_knowledge_base_paths(config, clone_dir)
+
+                self.assertEqual(
+                    paths.root_dir.as_posix(),
+                    f"{clone_dir.as_posix()}/docs/knowledge-base",
+                )
+                self.assertEqual(
+                    paths.source_docs_dir.as_posix(),
+                    f"{clone_dir.as_posix()}/docs/医院材料学习",
+                )
+                self.assertEqual(
+                    paths.policy_save_dir.as_posix(),
+                    f"{clone_dir.as_posix()}/data/sh-yb-policies",
+                )
+                self.assertEqual(
+                    paths.shared_info_file.as_posix(),
+                    f"{skill_dirs[target_os].as_posix()}/_shared_runtime/knowledge-base-paths.json",
+                )
+
+    def test_ensure_knowledge_base_layout_creates_expected_directories(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            clone_dir = Path(tmpdir) / "hospital-claw"
+            ensure_knowledge_base_layout(clone_dir)
+
+            expected_dirs = [
+                clone_dir / "docs" / "knowledge-base",
+                clone_dir / "docs" / "knowledge-base" / "wiki",
+                clone_dir / "docs" / "knowledge-base" / "index",
+                clone_dir / "docs" / "knowledge-base" / ".staging",
+                clone_dir / "docs" / "knowledge-base" / ".staging-binary-md",
+                clone_dir / "docs" / "knowledge-base" / ".manual-rules",
+                clone_dir / "docs" / "knowledge-base" / ".wiki-ingest-src",
+                clone_dir / "docs" / "医院材料学习",
+                clone_dir / "data" / "sh-yb-policies",
+            ]
+
+            for path in expected_dirs:
+                self.assertTrue(path.is_dir(), msg=f"Expected directory missing: {path}")
+
+    def test_sync_deployment_bundle_writes_shared_knowledge_base_info(self):
+        config = load_target_config(self.fixture_path("target_config.json"))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_root = Path(tmpdir) / "source"
+            source_root.mkdir(parents=True, exist_ok=True)
+            config.agent_skill_dir = Path(tmpdir) / "skills"
+            config.clone_dir = source_root
+
+            copied_items = sync_deployment_bundle(
+                source_root,
+                config,
+                DeploymentInventory(skill_directories=(), shared_runtime_files=()),
+            )
+
+            shared_info_file = config.agent_skill_dir / "_shared_runtime" / "knowledge-base-paths.json"
+            self.assertIn(shared_info_file.as_posix(), copied_items)
+            self.assertTrue(shared_info_file.exists())
+
+            payload = json.loads(shared_info_file.read_text(encoding="utf-8"))
+            self.assertEqual(
+                payload["knowledgeBase"]["rootDir"],
+                source_root.joinpath("docs", "knowledge-base").as_posix(),
+            )
+            self.assertEqual(
+                payload["knowledgeBase"]["sourceDocsDir"],
+                source_root.joinpath("docs", "医院材料学习").as_posix(),
+            )
+            self.assertEqual(
+                payload["knowledgeBase"]["policySaveDir"],
+                source_root.joinpath("data", "sh-yb-policies").as_posix(),
+            )
 
     def test_execute_local_deploy_dry_run_returns_checkout_steps_and_manual_steps(self):
         config = load_target_config(self.fixture_path("target_config.json"))

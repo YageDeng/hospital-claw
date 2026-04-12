@@ -245,6 +245,11 @@ def verify_workbuddy_deploy(
     expected_skills = list(template_payload.get("skills", [])) if template_payload is not None else []
     skills_dir = _path_from_payload(template_payload.get("skillsDir")) if template_payload is not None else None
     shared_runtime_dir = _path_from_payload(template_payload.get("sharedRuntimeDir")) if template_payload is not None else None
+    knowledge_base_payload = (
+        template_payload.get("knowledgeBase", {})
+        if template_payload is not None and isinstance(template_payload.get("knowledgeBase", {}), dict)
+        else {}
+    )
 
     for skill_name in expected_skills:
         skill_file = (skills_dir / skill_name / "SKILL.md") if skills_dir is not None else None
@@ -283,6 +288,33 @@ def verify_workbuddy_deploy(
                 "shared_runtime_dir_present",
                 "fail",
                 "Generated template did not provide a shared runtime directory",
+            )
+        )
+
+    knowledge_base_paths_to_check = [
+        ("knowledge_base_root_exists", "rootDir", "knowledge-base root"),
+        ("knowledge_base_source_docs_dir_exists", "sourceDocsDir", "knowledge-base source docs dir"),
+        ("knowledge_base_policy_save_dir_exists", "policySaveDir", "knowledge-base policy save dir"),
+        ("knowledge_base_shared_info_exists", "sharedInfoFile", "knowledge-base shared info file"),
+    ]
+    if knowledge_base_payload:
+        for check_name, key, label in knowledge_base_paths_to_check:
+            path, exists = _probeable_path_exists(
+                knowledge_base_payload.get(key) if isinstance(knowledge_base_payload.get(key), str) else None
+            )
+            runtime_file_checks.append(
+                CheckResult(
+                    check_name,
+                    "pass" if exists else "fail",
+                    f"{label} {'exists' if exists else 'is missing'}: {path}",
+                )
+            )
+    else:
+        runtime_file_checks.append(
+            CheckResult(
+                "knowledge_base_paths_present",
+                "fail",
+                "Generated template did not provide knowledge-base path metadata",
             )
         )
 

@@ -25,11 +25,19 @@ Use the checked-in example config as the starting point:
 
 - `config/agent_deploy.example.json`
 
+Local machine samples are also available for each desktop/server target:
+
+- `config/agent_deploy.win.local.json`
+- `config/agent_deploy.linux.local.json`
+- `config/agent_deploy.macos.local.json`
+
 The config defines:
 
 - repo checkout location
 - target skill directory
 - template output directory
+- optional `deploy_root_dir` for deriving `clone_dir`, `agent_skill_dir`, and `template_output_dir`
+- local `repo_url` values may be written as relative paths and are resolved relative to the config file location
 - `qmd` daemon behavior
 - whether machine-level install attempts should be made for Git / Node / qmd (`qmd.install_machine_tools`)
 - optional `wechat-router` and `wechat-decrypt` dependency groups
@@ -53,6 +61,18 @@ It also copies the shared runtime files needed by those skills into `_shared_run
 - `scripts/binary_docs_to_markdown.py`
 - `scripts/wechat_article_pipeline.py`
 - `skills/sh-yb-policy-monitor/scripts/fetch_policies.py`
+
+It now also writes a generated shared-path file for the deployed skills:
+
+- `_shared_runtime/knowledge-base-paths.json`
+
+That file is the shared source of truth for KB-related paths on each target machine, including:
+
+- KB root: `<clone_dir>/docs/knowledge-base`
+- source docs: `<clone_dir>/docs/医院材料学习`
+- policy mirror: `<clone_dir>/data/sh-yb-policies`
+
+The relative layout is identical on Windows, macOS, and Linux; only the absolute prefix and native path separators differ.
 
 ## Commands
 
@@ -107,6 +127,8 @@ The deploy script writes template files under the configured template output dir
 
 These files are intended for operator review and adaptation. The first version does **not** rewrite the live agent-system config automatically.
 
+`agent-runtime-config.template.json` now includes a `knowledgeBase` object with the resolved per-machine KB paths and the location of `_shared_runtime/knowledge-base-paths.json`, so every deployed skill can read the same path contract instead of hardcoding a single workstation layout.
+
 The OS-specific startup templates are focused on the shared `qmd` MCP service so host boot/login setup is easier without guessing the agent runtime's internal service manager. `wechat-decrypt` remains a manual/runtime-specific setup step because of GUI, login, and permission requirements.
 
 ## Runtime Behavior
@@ -123,6 +145,18 @@ For fresh hosts, the deploy path now tries to bootstrap machine tools where prac
 - Git
 - Node.js / npm
 - `qmd`
+
+It also creates the KB directory layout inside the repo clone on first deploy:
+
+- `docs/knowledge-base/`
+- `docs/knowledge-base/wiki/`
+- `docs/knowledge-base/index/`
+- `docs/knowledge-base/.staging/`
+- `docs/knowledge-base/.staging-binary-md/`
+- `docs/knowledge-base/.manual-rules/`
+- `docs/knowledge-base/.wiki-ingest-src/`
+- `docs/医院材料学习/`
+- `data/sh-yb-policies/`
 
 Current automation expectations:
 

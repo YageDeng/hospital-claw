@@ -1,7 +1,7 @@
 ---
 name: knowledge-base-update
 version: v2
-description: 更新本地知识库。支持三种模式：docs（扫描新文档与公众号监测原生 Markdown）、policy（从上海医保局网站获取最新政策）、rules（添加手动规则）。适配 qmd 1.0.5：使用 collection add + wiki write，而不是 qmd index。
+description: 当用户要求刷新共享知识库、把新文档/新政策/新规则/公众号监测内容纳入知识库，或重建检索层与 wiki 时使用。它是共享知识库的标准更新入口。
 ---
 
 # 知识库更新（v2 — qmd 1.0.5 兼容）
@@ -10,11 +10,11 @@ description: 更新本地知识库。支持三种模式：docs（扫描新文档
 
 ## 概述
 
-本技能管理 `docs/knowledge-base/` 知识库的更新，支持三种数据来源：
+本技能管理 `<KB_ROOT>/` 知识库的更新，支持三种数据来源：
 
 | 模式 | 触发语 | 说明 |
 |------|--------|------|
-| **docs** | "更新知识库" / "添加新文档到知识库" / "同步公众号监测文章到知识库" / "刷新公众号每日监测知识库" | 扫描 `docs/医院材料学习/` 中的新文档与原生 Markdown（包括 `docs/医院材料学习/公众号每日监测/`），转换后更新检索集合 |
+| **docs** | "更新知识库" / "添加新文档到知识库" / "同步公众号监测文章到知识库" / "刷新公众号每日监测知识库" | 扫描 `<KB_SOURCE_ROOT>/` 中的新文档与原生 Markdown（包括 `<KB_SOURCE_ROOT>/公众号每日监测/`），转换后更新检索集合 |
 | **policy** | "获取最新政策并更新知识库" | 调用 `sh-yb-policy-monitor` 获取新政策，然后执行 docs 流程 |
 | **rules** | "添加新规则到知识库" | 接收用户手动输入的规则内容，保存并索引 |
 
@@ -35,6 +35,27 @@ description: 更新本地知识库。支持三种模式：docs（扫描新文档
    - `openpyxl`（XLSX 转换）
    - `pymupdf`、`python-docx`、`python-pptx`（二进制文档转 Markdown）
 
+## 共享知识库路径
+
+优先读取 `_shared_runtime/knowledge-base-paths.json`：
+
+- `<KB_ROOT>` = `knowledgeBase.rootDir`
+- `<KB_SOURCE_ROOT>` = `knowledgeBase.sourceDocsDir`
+- `<KB_POLICY_ROOT>` = `knowledgeBase.policySaveDir`
+
+共享文件缺失时回退到：
+
+- `<KB_ROOT>` = `docs/knowledge-base`
+- `<KB_SOURCE_ROOT>` = `docs/医院材料学习`
+- `<KB_POLICY_ROOT>` = `data/sh-yb-policies`
+
+## 跨技能协作约定
+
+- 本技能是共享知识库的唯一完整更新入口；涉及集合刷新、manifest、wiki 重写时以本技能为准。
+- `sh-yb-policy-monitor` 负责抓取政策文件；抓取完成后由本技能接管入库。
+- `wechat-daily-monitor` 负责抓取公众号文章；如需统一刷新检索层、manifest 或 wiki，由本技能接管。
+- `tcm-treatment-plan` 与 `tcm-treatment-review` 只读知识库，不直接修改集合、manifest 或源目录结构。
+
 ## 执行流程
 
 ### 第一步：确定更新模式
@@ -43,24 +64,24 @@ description: 更新本地知识库。支持三种模式：docs（扫描新文档
 
 补充约定：
 
-- `公众号每日监测` 产物如果已经落在 `docs/医院材料学习/公众号每日监测/`，默认复用 `docs` 模式，不新增独立 `wechat` 模式
+- `公众号每日监测` 产物如果已经落在 `<KB_SOURCE_ROOT>/公众号每日监测/`，默认复用 `docs` 模式，不新增独立 `wechat` 模式
 - 当 `wechat-daily-monitor` 技能刚保存完文章 Markdown 后，应立即执行本技能的 `docs` 最小刷新流程，至少刷新 `source_md` 与 manifest
 
 ### 第二步：按模式执行数据获取
 
 #### 模式一：docs（文档扫描）
 
-1. 列出 `docs/医院材料学习/` 中所有文件
+1. 列出 `<KB_SOURCE_ROOT>/` 中所有文件
 2. 运行转换脚本，生成仓库内可索引的 Markdown 输入：
 
 ```powershell
 cd <repo-root>
 .\.venv\Scripts\Activate.ps1
-python scripts/xlsx_to_markdown.py --input "docs/医院材料学习" --output "docs/knowledge-base/.staging"
-python scripts/binary_docs_to_markdown.py --input "docs/医院材料学习" --output "docs/knowledge-base/.staging-binary-md"
+python scripts/xlsx_to_markdown.py --input "<KB_SOURCE_ROOT>" --output "<KB_ROOT>/.staging"
+python scripts/binary_docs_to_markdown.py --input "<KB_SOURCE_ROOT>" --output "<KB_ROOT>/.staging-binary-md"
 ```
 
-3. 如果 `docs/医院材料学习/` 中存在原生 Markdown 文件，也将其纳入 `source_md` 刷新范围；这包括 `docs/医院材料学习/公众号每日监测/` 下新抓取的文章 Markdown
+3. 如果 `<KB_SOURCE_ROOT>/` 中存在原生 Markdown 文件，也将其纳入 `source_md` 刷新范围；这包括 `<KB_SOURCE_ROOT>/公众号每日监测/` 下新抓取的文章 Markdown
 4. 继续到第三步
 
 #### 模式二：policy（政策获取）
@@ -73,13 +94,13 @@ cd <repo-root>
 python skills/sh-yb-policy-monitor/scripts/fetch_policies.py --days 7
 ```
 
-2. 将新获取的政策文件从 `SH_YB_POLICY_SAVE_DIR` 指定目录，或默认 `data/sh-yb-policies/`，复制到 `docs/医院材料学习/`
+2. 将新获取的政策文件从 `SH_YB_POLICY_SAVE_DIR` 指定目录，或默认 `<KB_POLICY_ROOT>/`，复制到 `<KB_SOURCE_ROOT>/`
 3. 再按 docs 模式继续执行转换与集合刷新
 
 #### 模式三：rules（手动规则）
 
 1. 请用户提供规则内容（文字描述或结构化数据）
-2. 将内容保存为 Markdown 文件到 `docs/knowledge-base/.manual-rules/`
+2. 将内容保存为 Markdown 文件到 `<KB_ROOT>/.manual-rules/`
 3. 文件命名格式：`{YYYY-MM-DD}_{规则主题简称}.md`
 4. 文件格式：
 
@@ -110,10 +131,10 @@ qmd collection remove yycailiao_md 2>$null
 qmd collection remove xlsxmd 2>$null
 qmd collection remove manual_rules 2>$null
 
-qmd collection add "docs/医院材料学习" --name source_md --mask "**/*.md"
-qmd collection add "docs/knowledge-base/.staging-binary-md" --name yycailiao_md --mask "**/*.md"
-qmd collection add "docs/knowledge-base/.staging" --name xlsxmd --mask "**/*.md"
-qmd collection add "docs/knowledge-base/.manual-rules" --name manual_rules --mask "**/*.md"
+qmd collection add "<KB_SOURCE_ROOT>" --name source_md --mask "**/*.md"
+qmd collection add "<KB_ROOT>/.staging-binary-md" --name yycailiao_md --mask "**/*.md"
+qmd collection add "<KB_ROOT>/.staging" --name xlsxmd --mask "**/*.md"
+qmd collection add "<KB_ROOT>/.manual-rules" --name manual_rules --mask "**/*.md"
 ```
 
 说明：
@@ -131,15 +152,15 @@ qmd collection add "docs/knowledge-base/.manual-rules" --name manual_rules --mas
 1. 确保 `.wiki-ingest-src/` 已存在并包含 `src-*.md`
 2. 把该目录加入 collection
 3. 对单个 source 执行 `qmd wiki ingest`
-4. 再用 `qmd wiki write` 把页面写回 `docs/knowledge-base/wiki/`
+4. 再用 `qmd wiki write` 把页面写回 `<KB_ROOT>/wiki/`
 
 注意：
 - 不要声称 `qmd wiki ingest` 单独执行后 wiki 已完成更新
-- 如果当前仓库里的 `docs/knowledge-base/wiki/` 已存在且本次只是刷新检索集合，可在输出中明确说明“检索层已更新，wiki 页面沿用现有版本”
+- 如果当前仓库里的 `<KB_ROOT>/wiki/` 已存在且本次只是刷新检索集合，可在输出中明确说明“检索层已更新，wiki 页面沿用现有版本”
 
 ### 第五步：更新清单文件
 
-使用辅助脚本更新 `docs/knowledge-base/.manifest.json`：
+使用辅助脚本更新 `<KB_ROOT>/.manifest.json`：
 
 ```powershell
 cd <repo-root>
@@ -171,7 +192,7 @@ python scripts/update_kb_manifest.py
 ## 知识库目录结构
 
 ```
-docs/knowledge-base/
+<KB_ROOT>/
 ├── wiki/                          # Wiki 页面
 ├── index/                         # 现有索引辅助文件
 ├── .staging/                      # XLSX -> MD 暂存

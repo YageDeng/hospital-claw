@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "wechat-handoff-to-kb-update",
+  "prompt": "我刚发来一篇公众号文章，需要你抓取正文、按监测规则分类，并把它纳入共享知识库。文章落盘后，如果还需要刷新 manifest、集合或 wiki，请走标准技能协作，不要重复实现两套知识库逻辑。",
+  "expected_output": "应先走 `wechat-daily-monitor` 抓取与分类，再明确把完整知识库刷新交给 `knowledge-base-update` 的 `docs` 模式；如只做最小刷新，也要说明范围仅限 `source_md`。",
+  "assertions": [
+    "响应明确先由 `wechat-daily-monitor` 完成文章抓取与分类。",
+    "响应明确将完整知识库刷新交给 `knowledge-base-update` 的 `docs` 模式。",
+    "如果提到 `--refresh-kb`，响应明确说明它只覆盖最小 `source_md` 刷新。",
+    "响应避免在公众号技能里重复实现 manifest、wiki 或全量集合维护逻辑。"
+  ]
+}

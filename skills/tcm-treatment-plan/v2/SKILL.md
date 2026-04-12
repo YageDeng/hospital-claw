@@ -1,7 +1,7 @@
 ---
 name: tcm-treatment-plan
 version: v2
-description: 作为经验丰富的中医师，根据患者的体重、年龄、性别及症状，制定分阶段中医治疗方案，给出治疗周期，并通过知识库查询最新上海医保价格政策优化客单价。当用户提供患者症状信息并请求制定中医治疗方案时使用。
+description: 当用户提供患者信息并要求制定中医治疗方案，且需要结合共享知识库查询最新价格、规则与合规约束时使用。
 ---
 
 # 中医治疗方案制定（v2 — 知识库驱动）
@@ -14,6 +14,13 @@ description: 作为经验丰富的中医师，根据患者的体重、年龄、�
 
 - MinerU MCP 服务应已启动（`qmd mcp --http --daemon`）
 - 如 MCP 不可用，在方案底部注明："⚠️ 知识库未连接，价格数据可能非最新，请人工核实。"
+
+## 共享知识库协作
+
+- 优先通过 MCP 查询共享知识库；如需路径回退，读取 `_shared_runtime/knowledge-base-paths.json`，共享文件缺失时回退到 `docs/knowledge-base`。
+- 本技能只读共享知识库，不直接修改集合、manifest、wiki 或源文件。
+- 如果用户明确要求“按最新政策”或“按最新公众号内容”出方案，而当前知识库可能过期，先触发对应生产者技能（政策用 `sh-yb-policy-monitor`，公众号用 `wechat-daily-monitor`），再由 `knowledge-base-update` 刷新后再出方案。
+- 合规复核优先复用 `tcm-treatment-review` 的审查逻辑，而不是在本技能里再维护一套独立规则。
 
 ## 角色定位
 

@@ -42,6 +42,10 @@ class TestCheckWorkBuddyDeploy(unittest.TestCase):
 
         self.assertTrue(all(result.status == "pass" for result in report.skill_checks))
         self.assertTrue(all(result.status == "pass" for result in report.runtime_file_checks))
+        kb_shared_info_checks = [
+            result for result in report.runtime_file_checks if result.name == "knowledge_base_shared_info_exists"
+        ]
+        self.assertEqual(kb_shared_info_checks[0].status, "pass")
         self.assertTrue(any(result.status == "cannot_prove_from_filesystem" for result in report.config_checks))
         self.assertEqual(report.summary["fail"], 0)
 

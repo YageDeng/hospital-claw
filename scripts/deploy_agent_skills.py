@@ -57,6 +57,18 @@ WECHAT_ROUTER_REQUIREMENTS = "wechat-router/requirements.txt"
 WECHAT_DECRYPT_REQUIREMENTS = "wechat-router/wechat-decrypt/requirements.txt"
 WECHAT_DECRYPT_MCP_SCRIPT = "wechat-router/wechat-decrypt/mcp_server.py"
 WECHAT_DECRYPT_WEB_SCRIPT = "wechat-router/wechat-decrypt/main.py"
+KNOWLEDGE_BASE_ROOT_RELATIVE_DIR = Path("docs") / "knowledge-base"
+KNOWLEDGE_BASE_SOURCE_DOCS_RELATIVE_DIR = Path("docs") / "医院材料学习"
+KNOWLEDGE_BASE_POLICY_SAVE_RELATIVE_DIR = Path("data") / "sh-yb-policies"
+KNOWLEDGE_BASE_LAYOUT_SUBDIRECTORIES = (
+    Path("wiki"),
+    Path("index"),
+    Path(".staging"),
+    Path(".staging-binary-md"),
+    Path(".manual-rules"),
+    Path(".wiki-ingest-src"),
+)
+KNOWLEDGE_BASE_SHARED_INFO_FILENAME = "knowledge-base-paths.json"
 
 
 class DeployError(RuntimeError):
@@ -159,6 +171,14 @@ class MachineBootstrapPlan:
     manual_steps: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class KnowledgeBasePaths:
+    root_dir: Path
+    source_docs_dir: Path
+    policy_save_dir: Path
+    shared_info_file: Path
+
+
 @dataclass
 class DeploySummary:
     mode: DeployMode
@@ -187,8 +207,26 @@ class DeploySummary:
         }
 
 
-def _coerce_path(value: str | Path) -> Path:
-    return Path(str(value)).expanduser()
+def _coerce_path(value: str | Path, *, base_dir: Path | None = None) -> Path:
+    raw_value = str(value).strip()
+    path = Path(raw_value).expanduser()
+    has_root_anchor = raw_value.startswith(("/", "\\"))
+    if not path.is_absolute() and not has_root_anchor and base_dir is not None:
+        path = base_dir / path
+    return path
+
+
+def _is_remote_repo_url(value: str) -> bool:
+    return "://" in value or value.startswith("git@")
+
+
+def _coerce_repo_url(value: str, *, base_dir: Path) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise DeployError("repo_url is required")
+    if _is_remote_repo_url(normalized):
+        return normalized
+    return _coerce_path(normalized, base_dir=base_dir).resolve().as_posix()
 
 
 def current_target_os() -> TargetOS:
@@ -258,14 +296,51 @@ def _ssh_from_dict(raw: dict[str, Any] | None) -> SSHSettings | None:
 
 def load_target_config(path: Path) -> DeployTargetConfig:
     raw = _load_json(path)
+    config_dir = path.resolve().parent
+    deploy_root_dir = (
+        _coerce_path(raw["deploy_root_dir"], base_dir=config_dir)
+        if raw.get("deploy_root_dir")
+        else None
+    )
+    clone_dir = (
+        _coerce_path(raw["clone_dir"], base_dir=config_dir)
+        if raw.get("clone_dir")
+        else (
+            (deploy_root_dir / "hospital-claw")
+            if deploy_root_dir is not None
+            else None
+        )
+    )
+    agent_skill_dir = (
+        _coerce_path(raw["agent_skill_dir"], base_dir=config_dir)
+        if raw.get("agent_skill_dir")
+        else (
+            (deploy_root_dir / "skills")
+            if deploy_root_dir is not None
+            else None
+        )
+    )
+    template_output_dir = (
+        _coerce_path(raw["template_output_dir"], base_dir=config_dir)
+        if raw.get("template_output_dir")
+        else (
+            (deploy_root_dir / "generated")
+            if deploy_root_dir is not None
+            else None
+        )
+    )
+    if clone_dir is None or agent_skill_dir is None or template_output_dir is None:
+        raise DeployError(
+            "Config must define either deploy_root_dir or all of clone_dir, agent_skill_dir, and template_output_dir."
+        )
     return DeployTargetConfig(
         mode=str(raw.get("mode", "local")),  # type: ignore[arg-type]
         target_os=_parse_target_os(raw.get("target_os")),
-        repo_url=str(raw["repo_url"]),
+        repo_url=_coerce_repo_url(str(raw["repo_url"]), base_dir=config_dir),
         repo_branch=str(raw.get("repo_branch", "main")),
-        clone_dir=_coerce_path(raw["clone_dir"]),
-        agent_skill_dir=_coerce_path(raw["agent_skill_dir"]),
-        template_output_dir=_coerce_path(raw["template_output_dir"]),
+        clone_dir=clone_dir,
+        agent_skill_dir=agent_skill_dir,
+        template_output_dir=template_output_dir,
         dry_run=bool(raw.get("dry_run", False)),
         qmd=_qmd_from_dict(raw.get("qmd")),
         optional_components=_optional_components_from_dict(raw.get("optional_components")),
@@ -295,6 +370,77 @@ def target_venv_python(clone_dir: Path, target_os: TargetOS) -> Path:
     if target_os == "windows":
         return clone_dir / ".venv" / "Scripts" / "python.exe"
     return clone_dir / ".venv" / "bin" / "python"
+
+
+def build_knowledge_base_paths(
+    config: DeployTargetConfig,
+    clone_dir: Path,
+) -> KnowledgeBasePaths:
+    shared_runtime_dir = config.agent_skill_dir / "_shared_runtime"
+    return KnowledgeBasePaths(
+        root_dir=clone_dir / KNOWLEDGE_BASE_ROOT_RELATIVE_DIR,
+        source_docs_dir=clone_dir / KNOWLEDGE_BASE_SOURCE_DOCS_RELATIVE_DIR,
+        policy_save_dir=clone_dir / KNOWLEDGE_BASE_POLICY_SAVE_RELATIVE_DIR,
+        shared_info_file=shared_runtime_dir / KNOWLEDGE_BASE_SHARED_INFO_FILENAME,
+    )
+
+
+def _knowledge_base_path_templates_by_os() -> dict[str, dict[str, str]]:
+    templates: dict[str, dict[str, str]] = {}
+    for target_os in ("windows", "macos", "linux"):
+        separator = "\\" if target_os == "windows" else "/"
+        templates[target_os] = {
+            "rootDir": f"<clone_dir>{separator}docs{separator}knowledge-base",
+            "sourceDocsDir": f"<clone_dir>{separator}docs{separator}医院材料学习",
+            "policySaveDir": f"<clone_dir>{separator}data{separator}sh-yb-policies",
+        }
+    return templates
+
+
+def build_knowledge_base_payload(
+    config: DeployTargetConfig,
+    clone_dir: Path,
+) -> dict[str, Any]:
+    paths = build_knowledge_base_paths(config, clone_dir)
+    return {
+        "rootDir": paths.root_dir.as_posix(),
+        "sourceDocsDir": paths.source_docs_dir.as_posix(),
+        "policySaveDir": paths.policy_save_dir.as_posix(),
+        "manifestPath": (paths.root_dir / ".manifest.json").as_posix(),
+        "stagingDir": (paths.root_dir / ".staging").as_posix(),
+        "stagingBinaryDir": (paths.root_dir / ".staging-binary-md").as_posix(),
+        "manualRulesDir": (paths.root_dir / ".manual-rules").as_posix(),
+        "wikiDir": (paths.root_dir / "wiki").as_posix(),
+        "indexDir": (paths.root_dir / "index").as_posix(),
+        "wikiIngestSourceDir": (paths.root_dir / ".wiki-ingest-src").as_posix(),
+        "sharedInfoFile": paths.shared_info_file.as_posix(),
+        "pathTemplatesByOs": _knowledge_base_path_templates_by_os(),
+    }
+
+
+def render_knowledge_base_shared_info(
+    config: DeployTargetConfig,
+    clone_dir: Path,
+) -> str:
+    payload = {
+        "targetOs": config.target_os,
+        "repoCloneDir": clone_dir.as_posix(),
+        "sharedRuntimeDir": (config.agent_skill_dir / "_shared_runtime").as_posix(),
+        "knowledgeBase": build_knowledge_base_payload(config, clone_dir),
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+
+
+def ensure_knowledge_base_layout(clone_dir: Path) -> None:
+    kb_root = clone_dir / KNOWLEDGE_BASE_ROOT_RELATIVE_DIR
+    required_directories = [
+        clone_dir / KNOWLEDGE_BASE_SOURCE_DOCS_RELATIVE_DIR,
+        clone_dir / KNOWLEDGE_BASE_POLICY_SAVE_RELATIVE_DIR,
+        kb_root,
+        *(kb_root / relative_path for relative_path in KNOWLEDGE_BASE_LAYOUT_SUBDIRECTORIES),
+    ]
+    for directory in required_directories:
+        directory.mkdir(parents=True, exist_ok=True)
 
 
 def _windows_tesseract_path() -> Path:
@@ -509,6 +655,7 @@ def render_agent_runtime_template(
         "repoCloneDir": clone_dir.as_posix(),
         "skillsDir": config.agent_skill_dir.as_posix(),
         "sharedRuntimeDir": shared_runtime_dir.as_posix(),
+        "knowledgeBase": build_knowledge_base_payload(config, clone_dir),
         "skills": [Path(relative_path).name for relative_path in inventory.skill_directories],
         "mcpServers": {},
         "serviceCommands": {},
@@ -824,6 +971,7 @@ def sync_deployment_bundle(
 ) -> list[str]:
     config.agent_skill_dir.mkdir(parents=True, exist_ok=True)
     shared_root = config.agent_skill_dir / "_shared_runtime"
+    shared_root.mkdir(parents=True, exist_ok=True)
     copied_items: list[str] = []
     for relative_path in inventory.skill_directories:
         source = source_root / relative_path
@@ -835,6 +983,12 @@ def sync_deployment_bundle(
         destination = shared_root / relative_path
         _copy_file(source, destination)
         copied_items.append(destination.as_posix())
+    knowledge_base_info_file = shared_root / KNOWLEDGE_BASE_SHARED_INFO_FILENAME
+    knowledge_base_info_file.write_text(
+        render_knowledge_base_shared_info(config, source_root),
+        encoding="utf-8",
+    )
+    copied_items.append(knowledge_base_info_file.as_posix())
     return copied_items
 
 
@@ -856,6 +1010,7 @@ def write_template_files(
         "agent_skill_dir": config.agent_skill_dir.as_posix(),
         "target_os": config.target_os,
         "mode": config.mode,
+        "knowledge_base": build_knowledge_base_payload(config, clone_dir),
     }
     summary_path.write_text(json.dumps(summary_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     written_paths.append(summary_path.as_posix())
@@ -910,6 +1065,7 @@ def execute_local_deploy(config: DeployTargetConfig, source_repo_root: Path) -> 
     if shutil.which("git") is None:
         raise DeployError("Git is not available after bootstrap planning. Install it manually and rerun deploy.")
     ensure_repo_checkout(config)
+    ensure_knowledge_base_layout(config.clone_dir)
     inventory = build_default_inventory(config.clone_dir)
     python_path = create_or_reuse_venv(config.clone_dir)
     install_python_packages(python_path, REQUIRED_PYTHON_PACKAGES)

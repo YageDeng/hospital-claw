@@ -7,19 +7,19 @@ todos:
     status: completed
   - id: extract-shared-automation
     content: Refactor reusable OCR/window automation pieces from `wechat-router` into shared modules the desktop app can consume.
-    status: in_progress
+    status: completed
   - id: build-shell-ui
     content: Build the PySide6 hover widget and expandable review surface that renders fields in a source-app-like layout.
-    status: pending
+    status: completed
   - id: implement-capture-pipeline
     content: Implement screen/window capture, OCR-first extraction, confidence handling, and schema mapping into structured case JSON.
-    status: pending
+    status: completed
   - id: add-remote-adapters
     content: Add backend API/direct-DB adapters and remote LLM/VLM adapters with strict JSON validation and retries.
-    status: pending
+    status: completed
   - id: implement-form-filling
     content: Implement field-by-field filling with profile locators, fallback rules, and operator approval gates.
-    status: pending
+    status: completed
   - id: package-and-validate
     content: Package the app as a Windows `.exe` and validate with unit, integration, golden-sample, and smoke tests.
     status: pending

@@ -72,7 +72,8 @@
 - **主模型**: `ollama/gemma4:e4b` ✅ 已指向本地
 - **兜底模型**: `kimi/kimi-code`（云端）
 - **Ollama 端点**: `http://127.0.0.1:11434`
-- **Gateway 服务**: ❌ 未安装（需在 Mac 图形终端运行 `sudo openclaw gateway install`）
+- **Gateway 服务**: ✅ 运行中 (pid 687, port 18789, loopback)
+- **Dashboard**: http://127.0.0.1:18789/
 
 ### Windows 配置
 
@@ -89,10 +90,10 @@
 | plan-gemma-macos-serve | ✅ 完成 | Windows + Mac 均已部署 Ollama + Gemma |
 | plan-openclaw-redirect | ✅ 完成 | Mac 已配置本地 Gemma 为主模型，仅缺 Gateway 服务安装 |
 | plan-gemma-e2e-driver | ✅ 完成 | run_gemma_skill_e2e.py 已编写并修复 |
-| plan-scenario-and-test-coverage | ⚠️ 部分 | 基础场景覆盖完成，probe 场景需 AGENT_DRIVER 配置 |
+| plan-scenario-and-test-coverage | ⚠️ 部分 | 基础场景覆盖完成，probe 场景需代码集成（AGENT_DRIVER 机制不兼容 Gemma 直接调用） |
 | plan-final-reporting | ✅ 完成 | Windows 报告 + Mac 报告 + 本跨平台总结 |
 
-**完成度：约 90%**
+**完成度：约 95%**
 
 ---
 
@@ -100,15 +101,19 @@
 
 ### 必须在 Mac 图形界面操作
 
-- [ ] 安装 OpenClaw Gateway 服务：在 Mac 终端运行 `sudo openclaw gateway install`
-- [ ] 安装后验证：`openclaw gateway status` 显示 Runtime 正常
+- [x] 安装 OpenClaw Gateway 服务 ✅ 已在 Mac Terminal.app 中安装成功
+- [x] 验证 Gateway 运行状态 ✅ running (pid 687, port 18789)
+
+### 代码集成（后续迭代）
+
+- [ ] 修复 SKILL_E2E_AGENT_DRIVER 机制：当前 probe 系统将 AGENT_DRIVER 当作可执行文件调用，不兼容 Gemma 直接调用方式。需编写 wrapper 脚本或重构 probe 驱动接口
+- [ ] 安装 qmd 插件，补测知识库场景（knowledge_base_docs_live / knowledge_base_rules_live）
+- [ ] 配置 SKILL_E2E_WECHAT_URL，测试公众号监控场景
 
 ### 可选优化
 
-- [ ] 安装 qmd 插件，补测知识库场景（knowledge_base_docs_live / knowledge_base_rules_live）
-- [ ] 配置 SKILL_E2E_AGENT_DRIVER，测试语义级 probe
 - [ ] 升级 Mac Python 到 3.10+，避免类型语法兼容问题
-- [ ] 配置 SKILL_E2E_WECHAT_URL，测试公众号监控场景
+- [ ] 运行 `openclaw doctor --repair` 修复 nvm Node 路径警告
 
 ---
 

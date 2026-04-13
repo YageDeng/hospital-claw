@@ -29,10 +29,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
-# Ensure the repo root is on the path so we can import skill_e2e_matrix etc.
+# Ensure the scripts/ dir (which also hosts skill_e2e_matrix.py) is importable.
+# We add both the repo root and the scripts/ dir so that both:
+#   from skill_e2e_matrix import ...   (expected at repo root)
+#   from scripts.skill_e2e_matrix ... (if needed from other dirs)
+# work correctly regardless of where the script is invoked from.
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+_SCRIPTS_DIR = _REPO_ROOT / "scripts"
+for p in (str(_REPO_ROOT), str(_SCRIPTS_DIR)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from skill_e2e_matrix import (
     ScenarioResult,

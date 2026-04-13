@@ -32,24 +32,24 @@
 | # | 场景 | Skill | 类型 | Windows | Mac |
 |---|------|-------|------|---------|-----|
 | 1 | review_db_local | tcm-treatment-review | 离线 | ✅ PASS | ✅ PASS |
-| 2 | tcm_treatment_plan_prereqs | tcm-treatment-plan | 前置 | ✅ PASS | ⏭ SKIP¹ |
+| 2 | tcm_treatment_plan_prereqs | tcm-treatment-plan | 前置 | ✅ PASS | ✅ PASS |
 | 3 | sh_yb_policy_monitor_live | sh-yb-policy-monitor | 在线 | ✅ PASS | ✅ PASS |
 | 4 | knowledge_base_docs_live | knowledge-base-update | 在线 | ⏭ SKIP | ⏭ SKIP |
-| 5 | knowledge_base_rules_live | knowledge-base-update | 在线 | ⏭ SKIP | ⏭ SKIP |
+| 5 | knowledge_base_rules_live | knowledge-base-update | 在线 | ⏭ SKIP | ✅ PASS |
 | 6 | wechat_daily_monitor_manual_url | wechat-daily-monitor | 在线 | ⏭ SKIP | ⏭ SKIP |
-| 7 | tcm_treatment_review_agent_probe | tcm-treatment-review | Probe | — | ⏭ SKIP¹ |
-| 8 | wechat_daily_monitor_discovered_probe | wechat-daily-monitor | Probe | — | ⏭ SKIP¹ |
+| 7 | tcm_treatment_review_agent_probe | tcm-treatment-review | Probe | — | ✅ PASS |
+| 8 | wechat_daily_monitor_discovered_probe | wechat-daily-monitor | Probe | — | ✅ PASS |
 
-> ¹ Mac 启用了 `SKILL_E2E_ENABLE_PROBES=1`，需要 `SKILL_E2E_AGENT_DRIVER` 配置才能运行 probe
+> ¹ Mac 启用了 `SKILL_E2E_ENABLE_PROBES=1`，`gemma_probe_driver.py` 已集成
 
 ### 总成绩
 
 | 平台 | PASS | FAIL | SKIP | 总计 |
 |------|------|------|------|------|
 | Windows (gemma3:4b) | 3 | 0 | 3 | 6 |
-| Mac (gemma4:e4b) | 2 | 0 | 6 | 8 |
+| Mac (gemma4:e4b) | 6 | 0 | 2 | 8 |
 
-**两个平台均零失败。** SKIP 场景均因缺少外部依赖（qmd / AGENT_DRIVER / WECHAT_URL），非模型能力问题。
+**两个平台均零失败。** Mac 剩余 2 个 SKIP（LibreOffice 缺失、WECHAT_URL 未配置），非模型能力问题。
 
 ---
 
@@ -88,12 +88,12 @@
 |----------|------|------|
 | discover-openclaw-config | ✅ 完成 | Mac 配置已探明，主模型已指向 ollama/gemma4:e4b |
 | plan-gemma-macos-serve | ✅ 完成 | Windows + Mac 均已部署 Ollama + Gemma |
-| plan-openclaw-redirect | ✅ 完成 | Mac 已配置本地 Gemma 为主模型，仅缺 Gateway 服务安装 |
+| plan-openclaw-redirect | ✅ 完成 | Mac 已配置本地 Gemma 为主模型，Gateway 已运行 |
 | plan-gemma-e2e-driver | ✅ 完成 | run_gemma_skill_e2e.py 已编写并修复 |
-| plan-scenario-and-test-coverage | ⚠️ 部分 | 基础场景覆盖完成，probe 场景需代码集成（AGENT_DRIVER 机制不兼容 Gemma 直接调用） |
-| plan-final-reporting | ✅ 完成 | Windows 报告 + Mac 报告 + 本跨平台总结 |
+| plan-scenario-and-test-coverage | ✅ 完成 | 6P/0F/2S，gemma_probe_driver.py 已集成 probe 场景 |
+| plan-final-reporting | ✅ 完成 | Windows 报告 + Mac 报告（最终版）+ 跨平台总结 |
 
-**完成度：约 95%**
+**完成度：约 99%**
 
 ---
 
@@ -104,16 +104,17 @@
 - [x] 安装 OpenClaw Gateway 服务 ✅ 已在 Mac Terminal.app 中安装成功
 - [x] 验证 Gateway 运行状态 ✅ running (pid 687, port 18789)
 
-### 代码集成（后续迭代）
+### 代码集成 ✅ 全部完成
 
-- [ ] 修复 SKILL_E2E_AGENT_DRIVER 机制：当前 probe 系统将 AGENT_DRIVER 当作可执行文件调用，不兼容 Gemma 直接调用方式。需编写 wrapper 脚本或重构 probe 驱动接口
-- [ ] 安装 qmd 插件，补测知识库场景（knowledge_base_docs_live / knowledge_base_rules_live）
-- [ ] 配置 SKILL_E2E_WECHAT_URL，测试公众号监控场景
+- [x] AGENT_DRIVER 机制 ✅ `gemma_probe_driver.py` 已编写并验证（commit `308ccfb`）
+- [x] qmd 插件 ✅ `npm install -g @tobilu/qmd`，OpenJDK 25 已装，`knowledge_base_rules_live` 通过
 
 ### 可选优化
 
-- [ ] 升级 Mac Python 到 3.10+，避免类型语法兼容问题
-- [ ] 运行 `openclaw doctor --repair` 修复 nvm Node 路径警告
+- [ ] 安装 LibreOffice 解决 `knowledge_base_docs_live`（PDF/DOCX 转 Markdown）
+- [ ] 配置 `SKILL_E2E_WECHAT_URL` 测试微信公众号监控场景
+- [ ] 将 `JAVA_HOME=/opt/homebrew/opt/openjdk` 写入 `~/.zshrc` 永久化 qmd 环境
+- [ ] 升级 Mac Python 到 3.10+（避免 `__future__` 依赖）
 
 ---
 

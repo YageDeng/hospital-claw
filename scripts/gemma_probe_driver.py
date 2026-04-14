@@ -56,9 +56,21 @@ def main() -> int:
         print("FAIL: empty response from Ollama")
         return 1
 
-    # Check for refusal / error indicators
+    # Check for genuine refusal / error indicators
     lower = content.lower()
-    for phrase in ("i cannot", "i can't", "unable to", "not possible", "error:"):
+    refusal_phrases = (
+        "i'm sorry",
+        "i cannot assist",
+        "i can't assist",
+        "i will not",
+        "i won't",
+        "inappropriate",
+        "harmful",
+        "illegal",
+        "not possible to help",
+        "error:",
+    )
+    for phrase in refusal_phrases:
         if phrase in lower:
             print(f"FAIL: model refused or errored: {content[:200]}")
             return 1

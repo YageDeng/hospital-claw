@@ -7,6 +7,7 @@
 
 依赖：pip install requests beautifulsoup4
 """
+from __future__ import annotations
 
 import argparse
 import os

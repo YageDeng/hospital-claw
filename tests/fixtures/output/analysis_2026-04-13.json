@@ -1,0 +1,191 @@
+{
+  "revenue": {
+    "total_revenue": 2070.0,
+    "daily_avg_revenue": 690.0,
+    "insurance_ratio": 0.8,
+    "avg_ticket": 295.7142857142857,
+    "dept_breakdown": {
+      "推拿科": 740,
+      "针灸科": 1330
+    },
+    "daily_trend": [
+      {
+        "date": "2026-04-01",
+        "amount": 1050
+      },
+      {
+        "date": "2026-04-02",
+        "amount": 960
+      },
+      {
+        "date": "2026-04-03",
+        "amount": 60
+      }
+    ]
+  },
+  "materials": {
+    "total_cost": 610.0,
+    "cost_rate": 0.2946859903381642,
+    "dept_breakdown": {
+      "推拿科": 90,
+      "针灸科": 520
+    },
+    "top_items": {
+      "一次性针灸针": 360,
+      "艾条": 160,
+      "推拿油": 90
+    },
+    "daily_trend": [
+      {
+        "date": "2026-04-01",
+        "amount": 210
+      },
+      {
+        "date": "2026-04-02",
+        "amount": 150
+      },
+      {
+        "date": "2026-04-03",
+        "amount": 250
+      }
+    ]
+  },
+  "visits": {
+    "total_visits": 7,
+    "daily_avg_visits": 2.3,
+    "revisit_rate": 0.2857142857142857,
+    "insurance_patient_ratio": 0.7142857142857143,
+    "dept_breakdown": {
+      "推拿科": 3,
+      "针灸科": 4
+    },
+    "doctor_breakdown": {
+      "张医师": 4,
+      "李医师": 2,
+      "王医师": 1
+    }
+  },
+  "treatments": {
+    "total_treatment_revenue": 430.0,
+    "total_treatment_count": 8,
+    "top_items": [
+      {
+        "name": "针刺",
+        "revenue": 150.0,
+        "count": 2
+      },
+      {
+        "name": "推拿",
+        "revenue": 140.0,
+        "count": 2
+      },
+      {
+        "name": "灸法",
+        "revenue": 80.0,
+        "count": 1
+      },
+      {
+        "name": "电针",
+        "revenue": 60.0,
+        "count": 1
+      }
+    ],
+    "avg_price_per_item": 53.75
+  },
+  "insurance": {
+    "total_settlements": 5,
+    "success_rate": 0.6,
+    "rejection_rate": 0.4,
+    "total_amount": 1730.0,
+    "pooling_payment": 1020.0,
+    "rejection_reasons": {
+      "诊断与治疗不一致": 1,
+      "超量开药": 1
+    }
+  },
+  "staff": {
+    "staff_count": 3,
+    "avg_patients_per_doctor": 15.666666666666666,
+    "staff_details": [
+      {
+        "name": "张医师",
+        "total_patients": 29,
+        "total_treatments": 23,
+        "days_worked": 3,
+        "daily_avg_patients": 9.7,
+        "overtime_hours": 2.0
+      },
+      {
+        "name": "李医师",
+        "total_patients": 14,
+        "total_treatments": 13,
+        "days_worked": 2,
+        "daily_avg_patients": 7.0,
+        "overtime_hours": 1.5
+      },
+      {
+        "name": "王医师",
+        "total_patients": 4,
+        "total_treatments": 3,
+        "days_worked": 1,
+        "daily_avg_patients": 4.0,
+        "overtime_hours": 0.0
+      }
+    ]
+  },
+  "anomalies": [
+    {
+      "metric": "daily_revenue",
+      "level": "red",
+      "date": "2026-04-03",
+      "message": "日营收环比下降 94%（960 → 60）"
+    },
+    {
+      "metric": "material_consumption",
+      "level": "yellow",
+      "date": "2026-04-03",
+      "message": "物料消耗环比上升 67%（150 → 250）"
+    },
+    {
+      "metric": "insurance_rejection",
+      "level": "red",
+      "date": "",
+      "message": "医保拒付/扣减率 40%，超过 5% 阈值"
+    }
+  ],
+  "suggestions": [
+    {
+      "category": "营收",
+      "priority": "高",
+      "suggestion": "[2026-04-03] 日营收环比下降 94%（960 → 60）。建议排查当日排班是否异常、是否有停诊，并对比同期数据确认是否为周期性波动。"
+    },
+    {
+      "category": "物料",
+      "priority": "中",
+      "suggestion": "[2026-04-03] 物料消耗环比上升 67%（150 → 250）。建议核查是否为批量领用或异常浪费，对照治疗量确认耗材用量合理性。"
+    },
+    {
+      "category": "医保",
+      "priority": "高",
+      "suggestion": "医保拒付/扣减率 40%，超过 5% 阈值。建议立即排查拒付原因，重点关注诊断-治疗一致性和医保编码合规性。"
+    },
+    {
+      "category": "患者运营",
+      "priority": "中",
+      "suggestion": "复诊率 29%，低于 40% 基准。建议加强诊后随访和疗程管理。"
+    }
+  ],
+  "summary": {
+    "analysis_date": "2026-04-14",
+    "sources_loaded": [
+      "revenue",
+      "materials",
+      "visits",
+      "treatments",
+      "insurance",
+      "staff"
+    ],
+    "total_anomalies": 3,
+    "total_suggestions": 4
+  }
+}

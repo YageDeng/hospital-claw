@@ -49,7 +49,7 @@
 | Windows (gemma3:4b) | 3 | 0 | 3 | 6 |
 | Mac (gemma4:e4b) | 7 | 0 | 1 | 8 |
 
-**两个平台均零失败。** Mac 剩余 2 个 SKIP（LibreOffice 缺失、WECHAT_URL 未配置），非模型能力问题。
+**两个平台均零失败。** Mac 剩余 1 个 SKIP（WECHAT_URL 未配置），LibreOffice 已安装，knowledge_base_docs_live 已 PASS，非模型能力问题。
 
 ---
 

@@ -9,10 +9,11 @@ and exits 0 (PASS) or non-zero (FAIL).
 from __future__ import annotations
 
 import json
-import sys
-import urllib.request
-import urllib.error
 import os
+import sys
+import urllib.error
+import urllib.request
+
 
 def main() -> int:
     if len(sys.argv) < 2:

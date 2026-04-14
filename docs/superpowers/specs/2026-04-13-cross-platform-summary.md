@@ -34,7 +34,7 @@
 | 1 | review_db_local | tcm-treatment-review | 离线 | ✅ PASS | ✅ PASS |
 | 2 | tcm_treatment_plan_prereqs | tcm-treatment-plan | 前置 | ✅ PASS | ✅ PASS |
 | 3 | sh_yb_policy_monitor_live | sh-yb-policy-monitor | 在线 | ✅ PASS | ✅ PASS |
-| 4 | knowledge_base_docs_live | knowledge-base-update | 在线 | ⏭ SKIP | ⏭ SKIP |
+| 4 | knowledge_base_docs_live | knowledge-base-update | 在线 | ⏭ SKIP | ✅ PASS |
 | 5 | knowledge_base_rules_live | knowledge-base-update | 在线 | ⏭ SKIP | ✅ PASS |
 | 6 | wechat_daily_monitor_manual_url | wechat-daily-monitor | 在线 | ⏭ SKIP | ⏭ SKIP |
 | 7 | tcm_treatment_review_agent_probe | tcm-treatment-review | Probe | — | ✅ PASS |
@@ -47,7 +47,7 @@
 | 平台 | PASS | FAIL | SKIP | 总计 |
 |------|------|------|------|------|
 | Windows (gemma3:4b) | 3 | 0 | 3 | 6 |
-| Mac (gemma4:e4b) | 6 | 0 | 2 | 8 |
+| Mac (gemma4:e4b) | 7 | 0 | 1 | 8 |
 
 **两个平台均零失败。** Mac 剩余 2 个 SKIP（LibreOffice 缺失、WECHAT_URL 未配置），非模型能力问题。
 

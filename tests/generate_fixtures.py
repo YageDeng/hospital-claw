@@ -6,6 +6,20 @@ from openpyxl import Workbook
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
+def _to_excel_date(d):
+    """将 datetime.date 转为 datetime.datetime，确保 Excel 识别为日期。"""
+    if isinstance(d, datetime.date) and not isinstance(d, datetime.datetime):
+        return datetime.datetime(d.year, d.month, d.day)
+    return d
+
+
+def _write_rows(ws, rows, date_col_index=0):
+    for row in rows:
+        row = list(row)
+        row[date_col_index] = _to_excel_date(row[date_col_index])
+        ws.append(row)
+
+
 def _write(wb: Workbook, path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
@@ -26,8 +40,7 @@ def generate_revenue():
         (base + datetime.timedelta(1), "推拿科", "王医师", "药品", 150, 120, 30, "P006"),
         (base + datetime.timedelta(2), "针灸科", "张医师", "治疗", 60, 48, 12, "P007"),  # 异常：低值
     ]
-    for r in rows:
-        ws.append(r)
+    _write_rows(ws, rows)
     _write(wb, FIXTURES_DIR / "sample_revenue.xlsx")
 
 
@@ -44,8 +57,7 @@ def generate_materials():
         (base + datetime.timedelta(1), "推拿油", "500ml", 2, 45, 90, "推拿科", "治疗"),
         (base + datetime.timedelta(2), "一次性针灸针", "0.25x40mm", 500, 0.5, 250, "针灸科", "治疗"),  # 异常：激增
     ]
-    for r in rows:
-        ws.append(r)
+    _write_rows(ws, rows)
     _write(wb, FIXTURES_DIR / "sample_materials.xlsx")
 
 
@@ -64,8 +76,7 @@ def generate_visits():
         (base + datetime.timedelta(1), "P006", "推拿科", "王医师", "初诊", "医保"),
         (base + datetime.timedelta(2), "P007", "针灸科", "张医师", "初诊", "自费"),
     ]
-    for r in rows:
-        ws.append(r)
+    _write_rows(ws, rows)
     _write(wb, FIXTURES_DIR / "sample_visits.xlsx")
 
 
@@ -83,8 +94,7 @@ def generate_treatments():
         (base + datetime.timedelta(1), "P004", "针刺", "HLZ001", 50, 2, 100, "张医师", "针灸科"),
         (base + datetime.timedelta(1), "P005", "推拿", "HLZ004", 70, 1, 70, "李医师", "推拿科"),
     ]
-    for r in rows:
-        ws.append(r)
+    _write_rows(ws, rows)
     _write(wb, FIXTURES_DIR / "sample_treatments.xlsx")
 
 
@@ -101,8 +111,7 @@ def generate_insurance():
         (base + datetime.timedelta(1), "P005", 310, 180, 68, 62, "拒付", "诊断与治疗不一致"),
         (base + datetime.timedelta(1), "P006", 150, 90, 30, 30, "扣减", "超量开药"),
     ]
-    for r in rows:
-        ws.append(r)
+    _write_rows(ws, rows)
     _write(wb, FIXTURES_DIR / "sample_insurance.xlsx")
 
 
@@ -120,8 +129,7 @@ def generate_staff():
         (base + datetime.timedelta(1), "王医师", "医师", "推拿科", 4, 3, 0),
         (base + datetime.timedelta(2), "张医师", "医师", "针灸科", 2, 1, 0),  # 异常：低值
     ]
-    for r in rows:
-        ws.append(r)
+    _write_rows(ws, rows)
     _write(wb, FIXTURES_DIR / "sample_staff.xlsx")
 
 
